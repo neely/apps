@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAABmJLR0QA/wD/AP+gvaeTAAAaAElEQVR4nO2deXxV1bXHv/vcMcm9NzchhDAPYbKgiGMdEAWRYhWtlaL1aR1erY9aa3lafdba9uGjtA6l0tYBX7VOBXEeKShohSoqAtZqooAMERISkjtkutPZ74+ADyFAcs6+uTc3+/v58PmQ5Jx91rnrd/fZZ++11hZkEJ/PV2oYxngwRoEcBWKUEJRKSQFQBBQA7kzaqNkf2QoiDCIEMiwl24TgQynZ4HCwIRQKbc2kdaIrL9avX7/8aLR5ihBMEoIzpGRsV9ugSTvbgBeFkC+Ew+E3gHhXXrwrxGQEg8HTTJPvAd8G/F1wTU12EAH5uGk6FzQ27v6kKy6YTkF7A4GiK0HeAAxN43U02Y8EXgMxPxJpeCWdF1Iu6LZhRdMsIcRsoK/q9jXdGyF4E+QN4XD4/bS0r7Ixvz94nhD8Hhissl1NziFB/jWZdN3Y3Fy3Q2XDSgQdDAaHmCYLgHNUtKfpMdSD+GEk0rBIVYO2BV1YWHihlOJBoFCBPZoeiVgMqVmRSKTedks2zvUEAsHfAtfZNUKjAbYLIc8Ph8Mf2GnEkqD9fn8vIYyXQHzdzsU1mv2ISikuiUYbXrTagKOzJxQXFw+UkhUgxlu9qEZzEDxCMNPj8UZjsdZ3rDTQKUH7/b1GS2m+AaLcysU0mg4ggKleb148Fmtd1dmTOyzovLxe/R2O1EpgUGcvotFYYLLH4yUWa32zMyd1SNB+v7+XwyFXghhuzTaNxhKnu92elng8trqjJ3RE0B6vN2+ZHjNrMoEQYrLX6/kkFot93JHjjcMdEAgE79KzGZoMYkjJI35/8UkdOfiQ03Z7Fk2WqLFLo7FFTTLpHN/cXLfzUAcdtIcOBoND9qwAajTZQB+nM/kIhxlVHHQM7XZ7HwGOUm2VRmODYW63p/lQL4ntDjn2RM09lz67NBrLJAyDE0Oh0Lr2/nhA992vX7/8PSGgGk024jJN+ScOMvRoZ8hhXC+EmJFmozQaG4gBbrenKh6PHRDItP+QwxsIBDejM0002U8dmKP2Dzn9SrfdlgOoxazpFpSAmL3/L/ftoY1AILgRndCq6T5EwBy6by/9ZQ8dDAYnosWs6V4EwPjxvr/4UtBScmnX26PR2OZHMCBv7w97BD0gT0ouyJRFGo0NigKBpi+1awD4/Y1noZNcNd0UKeVVe//vBBCCSSoaNgwDv78IjycPw7CWf2uaktbWZqLRBqSUKszSKCbb/CwEpxcWFg4Lh8Ob9wr6DLva8Xi8lJYOwDAcpFJJpDQtteN0GuTn+wgEiqip2U4i0aW1/jSHIUv9LKQU5wD3iLaSts5qbJQ0MAyD/v2HAZJwOEQqlbBjHC6Xm0CgiGQywc6dW3VPnSVkt5/l0kgkPM1oq89sr+CM31+EYTiU3CRAIhEnGg3hdnvx+fTQPlvIcj+f3q9fv3yjrdi4PTyePFKppJKb3Es8HiOZTJKXV6CsTY09stvPwhuJNB9vtFXOt4dhGJim+mGBaZoYRqdLh2jSRLb72TDEWAPESAU2aTQZR0qONISgLNOGaDQqEEKOMaTUW0RocgVZYqD3PNHkDkED8GXaCo1GDaLIQO8DqMkdPIetnKTRdCec6WjU4/Hg8wU7PbeYSqWIRht0/EY3IRv9nJYe2spNAjgcDvz+YBos0qSDbPRzWgRtZ9XH4UjLQ0OTBrLRz3oMrckptKA1OYV+vtvA5Stj6KiRjBpZzrDBAxk4oC9lpSX0Limi0O/DV5CP2+XE5TQQZopEKkmipZnGxiiRUIjddbXU7NxB1bbtbNmyiU8rK6ncUkdLKtN31n3Rgu4ErqJhHHvqKUw45euceNx4jhrWC6+jg6HkhoHH6cLjycMX7EXZgPYOkiSbati4YR3vvvM2b721itUbqmjUAu8wWtCHwfAN5qRvns8F501jyglDCbqUbo++HwJnQRmjT57G6JOncdlsSWttJf9Y/irPP/08r67dQatO3jkkaRF0KpXC4bD2Bmya2dAdCQqGTmDmVVdw+QUnMbjAULMpugU7vL1HM+m7o5l08Y/4741v8uRDj/DQ029T1ZoRg75CNvo5LS+F0WgDqVTnDTbNFNFoOA0WdRzvwAlcc/cS3lq+kF9eegpDMibm/RBOCkdM5vtzH2bl3xfxm8tPoCzDQQvZ6GcRCARtP8TKygZhGE7C4ToVNn1JYWEJppmkunqb0nbbxTuIKT+8lV9cPZFBXrsSliSbatmycSvVDREao60kXfn4/AFK+g9h+MDijo+9D4pJ06ZlLLhtLg+uqqYr1la7g5/1GBqD4NHfZc5d/8n04QXWe2OZoL7iTZ57filLl69i/ab6g453HXm9GXnCRM6aOo3zp5/MML/DwnUNCsq/wU2Pnsy5i+fykznPUtGkB9g9u4cWAcZdMY8/3TyZgR6rUjZprHyFBfMW8MjKz+msphyFI5l65U+4+ZpJDLH8ZJC0bHyRX/zwNhZVNFts4/B0Bz/33IUVzyCmz1vEk7edaV3MZoi1C69l2vTZ3Lui82IGSIU/5ZXfzWLauTfyxMdNWOtdBHnDpzPvqcf45eSyHv3Y7ZmCzjuCK+57nPkzh5NnUcsysZNlt13GJbe/xlbbMw6Spk9f4L9mXs68VXWkLD4zDf9Yrrj3ceZfOBSPXZO6KT1P0N7RXHn//3LbGX1wWh5lhHj7N1dz7aMVqHzAy8gG7rt6Fgs2WO2pQXgGcu68h5h/4ZAembnRswTtHMAFd9/PraeVYHmSQabYvuRmrn2wknRMBcum9cy/5hcsrbVWMw5AuPpx9tz7mHNmSQ9zcE8StPBx/A1/ZN7Zfa33zEhSXzzNz+eupC6NEwrmzpe4bc4ydlnXNMIzjJnzf8/VR/SsfrqHZKwYlH7jlyy4ejS2ppjNel759d2sDKV7esyk5sV5zJ8xgf+ZYH0q0fAfx3/+4UY+PH8u/4iqtzn7/NxDMlaMvudy+5xz6GdrMUMS+9ejLFhab3l82ynMHTx1zxK22FohFnjKL+G3PzuNojQsd2abn6EnZKwYvTn3tps4q7fNWzXDvH7/E1Qm1ZjVEVrf/wsPvxez9wUSTgbO+Dk3nOpXvoSfVX7eQ46PoQWB06/nlqn2X47M2mUsei3UNb3zlxfdwYuLV9Fo86LCOZCZP7+acT1gLi+3Be0ezVU3nEeZ7cKWKapeeo63W1QY1RkkdcueZUXYxtshAAL3yEu48cL+Oe7wnBa0oPisH/C9I9z2H7WpXaxc/iExFWZ1lqY1vPZ2s/0ng/Bx8g+u4ASvCqOyl9wVtGMoM//9TIoU3KFZv4oV6zJUK0RGWL1irZLAfsegb/H9b5ZkRzhsmshZQXuOnsFFRynonZG0rn2HtRkLqJc0vLeGT1S8jAofE747ncE5XEM+LYK2EvS9FzWZDB5OvPAcRY5LUrHunzSpaMoiqaoNrK9V8bkIvOPO4/wRahSdeT8fSG5mrOSdyLlTequ5uVQtG9Z/QUYTwxIVrP8wrmaGxTWCs88eoWRFLeN+boe0TAYmEnHq62vS0XSH8BwzmYm9FH1Xk5uo2NiFk8/t0sJnn1WR+oYKITopn3Q6Q39fwWc2v6WZ9nN75OAY2sWYiSdjdx1lL6m6z9kcznQmSJKtn20hqcgM58hTObUsB11PLgra0Z8TTuiHqvee5Ocb2ZLpDhpo3fI5Xyga9wj3GE48Jje3y8s9QRccybGjVY2kTFp27qQh0x00YNbsoMbu+spehJdxx47Gpai5bCLnBO0a/jVGuVXNtJrsqqlDlY7sYDbUUBNX9c1y0PuIUZTknPdzTtAC/4gR9FV2Vya1O3ZldoZjL6k6amwE/e+Ps3wE5TmYfJhjgnYwcOgA69ko+yNNGhoiXRuQdDBkhIaQOkEbgcEMDubemmHOCbrvgDJlL4TIJqJ2Q91UYUaJqKy74ShjYN/cWzLMrYwVo5iy3k51sQqykUgaMj0sIZuINoIENffn6EWpzbl6nbFyGGxnMhiFFAcV3pLZTFNLNrwSAqRoblIYvyryCBbZC73TGSsdwFYmg/AR8KkcFyaIJxQ2Z5NkIqV0PO/z+2wJQGespBvhJc9ySa92kCYpq1Vf0kDCRjDQgQi8ed6cCyXNLUHjxKm0IHmSRBasErYhSSUSSntopzPH3E+uCVoIhNIuR5Idc3ZtSMW2CLUfVlaQW4KWSZKqIngAcOLMmsUHgdOlcAaHtjF5rpFjgk4QSygUtDBwWC+zpBynxe0f2kcSi9kskZCF5FbGimyiUelCiAtX1vTQKO+hm5rsJd/qjJXDYDuTwQzTEFE4byzyKLBab1c5grx8hSnbMk5DvfUqp6AzVtKPWU9trcLVNMNPwJclozLhw+8T6npos5663faeZjpjJe3E2FlTry7cUxTg96lqzCbCR0ClLalqvqjWL4VZToqqz6vUhXsKB4VF6mvCWcIIEAyoc5fZVMW23dmyrK+OHBO0Se2mzagbRhuU9ilRF71nB0cv+vRWZ0lqy0Y2Z82ikTpyTNCQqPwEdUnaBr3LSrPiQxKBMkpt75+4F5OGTz5RlqOYTWSDr5Ri7v6I9co8ZeDv2wel8U4WcZT2oY+qDlom+HhDBVkUd6WMnBM0iUreWxdV9mLoHFLOkCyYi3YNHsoAZansn7LmvS4uDdxF5J6gifH+39fSoshbRtlQhuZnuot2MKh8CKpyf5Pb3mb11hwcb5BrGSsASEKr3+D92CQmKhhzCtcwRg1zwrpMPqDdDB01UJGzUlS/+QYfK3jP0Bkrh0FVJoOsfZ2X17SqeaQ6+nH0OEV18qziHMn4MXlqpg9TO1j6yodKNrvPtJ/bIy09dMYzGeRulj+ziltPm0LAtgpcfO3YsXge3kGXF/Dfg1F6FOMHtH0uMpnEXL8Wc8M65PatmPX1bccUFyMGDsYYdwzG0ccgDhImmNz8Es+uV9MzZtzP7ZAFrzvpQLJ72WJe2TWZi/rY7VsFBceewFHuZazJUM1z37HHMcYF5gfvk3hmMbKu9oBjzOqdUL2T1HvvIHqX4rpgJsb4Y796kIyzbvEzfJyL0xt7yMGXwj00/4OHnqhERTSpo88EJo3J1Hc/n5POOAHPM4uJP/CHdsW8P7J2F/H7F5B4etFXsgLM+uX8+alt2VE4J03krqBJUvH4Ql5rUDCB5xzIpMkjM/M48x7Ldc3LMZe/2ulTU8uXknxuSdsPMk7Fow+wLBsK9aWRHBY0yNql3P3gRwr2J3Ey/NzpjM/AtmjnTzyOEauXWj4/+bdXMNd/QKrmZe56KDcXU/YlpwUNSSr/PI9HN9tPLnUMOocZJ+UrsaqjuBwl3OTfZLudxFOP8ebd9/B62rd0zjy5lbHSHi1r+f0vlrDF7mDa6M253z+PAV3YBXxj/BR6NdXZbkfW1fP6WzHlVVSzys97yK2MlXaRRFbdyU1/2UTM3h7DFJx0Nf9xchf10qKIfxtXpKy5cb2LlbW1l+zycxu5lbFyMGQj7/x2NnePe4Kbj/dZX6Bw9GPGrT9gyfm/Y31at3kT+E+5jiMTHypr8chC9RX7s87P5PwYeh9iFdz/w5t5equd8bTAO/oqfv2jceQpNO2AqwRO4qdzvoMzoq4X6+PtARt905MEDZg1y7jlqjm8vstGjTjh5mvXzGfeOX3TE/jvGsJFv7uTS4ep3TDCVF2lJkvpUYIGaP1sEbMuvZ3Xq5OWRS2c/Tn/jvu4bXIftaJ2D2T6r+/jV5NLMAARVBfvsKs1Q8ucXUyPEzRAa8XjXPOdn/LURusBTCL/CC6/93H+cNlYChV8io6S45i18AnmXziMvUGCxqAh9hvewz8jjcraymZ6pKAB4ltf4oZvX8bc13dgdS8e4RnEN/97Ecv+MpuzRwasfZjOYo688Gc8ufQRbjq9D/sWajLGHWPNsHZ4raZeWVvZTI8VNIAMref+f7+Ai+cuY4vV5UThpu9p13Dv0hUse+Bmrjz7aPoXHO5jdVI47ES+9R+/4rEVK3jxzu9xfDs7DzjGH4Mo7WPNrn3Y3tzKil0NttvpDohAIGj7baGsbBCG4SQctr8IsC+FhSWYZpLq6m1K222P/PKz+cntN3P5SWXYKzEtkfEoOz/fSMWnW6huiBJtimE6vfh8AXr1H8rIUcMZUlpAR8rmmevWEr9/gR2DmPVBhZIeujv4OS2CVpXJ0JWCBkDkUz71Sm6cfTlTRwbU7aZlk8TTi0gttxbPsXBzFXdUqvn8uoOfHR6P95d2G/H5ChHCIBZrBiAYLLEU/G0YBi6Xm5aWJgC83nykNGlsTM+q0oEkaNj4Li89vpiln0Tw9hlKeT9/h3rSdOI4Ygwk4pibNnbqvIWbv+CuT7crS4btDn7OrT1WVGGGqVz6ADfMmMwJZ32fn937Eu9uiyrbPL7jSMyWnaxb+hf+Z+kT3PxhBVubD79EubW5lVkfVHBH5da0zj9no5+zQD3ZTJLQp2/y6Lw3eXSem5LRx3PaaadwyknHc9zRRzC4yI2huPeWyWZqPtvAu++8w+q/v8XKf/yL6n1eWF/c2cDk0l6c2aeYsYECyvLaVgCrW2J8FGliec1uVuyqJ2H2jIWU/dGC7jBx6ipW80zFap55ABBugv2HMWr0SEaUD2bwoIEM7FtK75JeFBcX4vcV4M/34HQ6cRrGIbfKkLHPeXn+n3jm/U/46F+bqG46eMBPwpQsra5jabXaF7NcQQvaKjJOqKqCNVUVrHnt0IcWnPYrXn/4Yvod5AktPIOZMKWcx558keqm3Cug2JX06HnorqJp9Z9ZuPZQq5IGhcf8gEdeXsj1p5Xh7kLbcg0t6K4gtZW/3vUkWw/5Vilwl01g9iOv8reF1zP9yBItbAukZdrO683HMKx9V0wzlcFpu/SR+OJj6kaez7SR+YeOxxZuisuP5+yLL+WiM8fQr9CLkWikviFKLMPp2t3Bz2lZWHG53Pj9RTg6uWvT3kyGeLxtaqrLF1bSjNF/Bv/78hwmF3VWBBIZb6Rm+1a2Vu2kuqaO+nCUppYY8USKtgkNk9p3l7Boze60FWHsDn7uGRkrWYL5xTPc9puzGD93IsWd0rRAuP2UlY+lrHzsQY5J8snvVrJkzW66qo55NvpZj6G7lBTbF9/CLS/sJIu2EM8ptKC7GrOWV2+dzX0fteRkfeZMowWdAWR0LXdefQvPbotrUStGCzpDpHa8zE//7Rae16JWihZ0BolvfYHZM67lwfUR5UVgeipa0BkmWf0Gcy6ayfWP/ZNwDw0oUokWdDbQsonnfnYxUy+7i5c+a0Tr2jpa0FlDnB1vPcCsaWdxwY0LeW1jRE/tWUALOttI1PHBkju48swJnDrzp9z5+Ao+rG7RvXYH0eGj2Yps4Ys1z3HPmue4R7gpHjaGY445miNHlVNePphBfXtT0quYoD8ft8uJKyv2b848WtDdARmnftM6Xtu0jsOEXvd49JBDk1NoQWtyCi1oTU6hBa3JKQwglmkjNBpFxAwglGkrNBpFRA2g+yfsaTRtRA3g8HvtajTdACmJGlKKjzNtiEajAiFEtSGE/CjThmg0apCVhmFgezO8ZDLZ6VT2juBwCExTh75nC9nvZ1FphEK+NULQYqeZ1tZmHA4HbrdXgVFtOJ0uHA4XsZgt0zQKyXY/C2FWGlDVIqV4y05DTU1tRUP8/kJcLvsbPDqdLgKBIpLJBNFoz9gbpDuQ5X42TdNc5wSQUv5NCM6y2pKUkl27vqC0tD/BYC+SyQRSWnuEGIaBw+EilUpQW7tDDzmyiCz384ZoNLpbAAQCgeFgfArWt8EGEELg9wfxegswLFYCN01JLNZCNNqgxZylZKOfheCucDh0w5fWFBYG35CSibZb1mgygvhmJNLwypfBSVLy50yao9HYIByJFKyEfaLtfL78p9BxHZpuiJTiSahqgX0EvWPHjmbgDxmzSqOxzqN7//OVEX0gECgGYwvg72qLNBqLbIxEQiOhraLaVwL8I5FIvZTyjxkxS6OxgBDyDvj/8oAHzLn4/f5eQjgqgV5daZhG01mkpCoaDQ1nnySVA1KwotHobiHkf3WpZRqNBYTgDvbLuDrYrLgRCBSuBvH19Jul0VhiUyQSGgt8Za/ogyXJmoYhZgGJtJul0VhCXMd+YgY4aCxga2trtdvtiQkhpqTVLo2mkwjBs5FI6Pb2/nbI4NZ4PPa2x+M9BRiWFss0ms7T4HQa57W0tETa++Ph6nKYyaTzMiC79u7S9FSklFxRX1+//WAHHLbQTHNz3U4h5DlAs1LTNJrOMz8aDT1/qAM6lE8Ti8V2eL2ez0B8G5shphqNRd6KREKXAYfcILrDCWKxWOxjt9vTql8SNV2NEHwkhJwai8WaDndspzIe4/HYaq/X0wriTOvmaTQdR0qqHA4xORQKdeg9rtMpvLFYbLXXmxcHJnfaOo2mc2yD1JnhcHhzR0+wlJMei7Wu8ni8EWAKekytSQNC8FEi4TijqSm0pTPnWS6yEIu1vuN2560TgnMA+ynAGs3/85YQcmpjY8Ouzp5ou3f1+YrGGoZ8ARhqty1Nj0cCCyKR0I1A3EoDtgueNzY2fATmcSAW221L06NpkJJvRSKhH2NRzKB4/BsIFF0E8o9Ascp2NbmNEDzrcBg/PtQKYIfbUmHQvuTnl/RzOpO/Bb6bjvY1OcUmENdFIg2vqGowbYIrLCw8DsSdutaHZn+kpEoI7oxEQvfTTgioHdLegwYCRdOA60HqKT7NRiHkHeFw+GFsjJMPRZcJzO/vNVqI1LXAJUCwq66ryTghKcUS4NFotGEV+yS0poNM9JiuwsLCiVKK6cB0YHAGbNCkDxPYAKwE8Xok0rACxcOKQ5HxIUBRUdGgZJJxhsFRUjIOzIG09eB7/gl1xYg1KogDjUBISqJCiBqQn4KoEMKsNE1zXTQa3Z0p4/4Ppso3jezPa7EAAAAASUVORK5CYII=">
+<title>Queue — Media Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #19191e;
+    --surface2: #222229;
+    --border: #2e2e38;
+    --accent-books: #e8c547;
+    --accent-movies: #e8574a;
+    --accent-tv: #4ab8e8;
+    --accent-games: #7ed87e;
+    --text: #f0efea;
+    --muted: #6e6e80;
+    --grain-opacity: 0.035;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    padding: 0 0 80px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: var(--grain-opacity);
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Header */
+  header {
+    padding: 32px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 12vw, 64px);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--text) 0%, #888 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    padding-bottom: 6px;
+  }
+
+  .btn-icon {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-icon:hover { color: var(--text); border-color: var(--muted); }
+
+  /* Main content */
+  main { padding: 24px 16px 0; display: flex; flex-direction: column; gap: 24px; }
+
+  /* Category section */
+  .category {
+    background: var(--surface);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .cat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .cat-header::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+  }
+  .books .cat-header::before { background: var(--accent-books); }
+  .movies .cat-header::before { background: var(--accent-movies); }
+  .tv .cat-header::before { background: var(--accent-tv); }
+
+  .cat-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+  }
+  .books .cat-label { color: var(--accent-books); }
+  .movies .cat-label { color: var(--accent-movies); }
+  .tv .cat-label { color: var(--accent-tv); }
+  .games .cat-label { color: var(--accent-games); }
+  .games .cat-header::before { background: var(--accent-games); }
+  .games .item-checkbox:hover { border-color: var(--accent-games); }
+
+  .cat-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .cat-count {
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--surface2);
+    border-radius: 20px;
+    padding: 3px 8px;
+    letter-spacing: 0.02em;
+  }
+
+  .cat-chevron {
+    color: var(--muted);
+    font-size: 14px;
+    transition: transform 0.2s;
+  }
+  .cat-chevron.open { transform: rotate(180deg); }
+
+  /* List items */
+  .item-list { padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+
+  .item {
+    background: var(--surface2);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px 10px 12px;
+    transition: border-color 0.15s, opacity 0.15s;
+    position: relative;
+  }
+  .item:hover { border-color: var(--border); }
+  .item.sortable-chosen { opacity: 0.5; }
+  .item.sortable-ghost { opacity: 0.3; border-style: dashed; border-color: var(--muted); }
+
+  /* Drag handle — double lines */
+  .drag-handle {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 6px 4px;
+    cursor: grab;
+    flex-shrink: 0;
+    touch-action: none;
+  }
+  .drag-handle:active { cursor: grabbing; }
+  .drag-handle span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--muted);
+    border-radius: 1px;
+  }
+  .drag-handle:hover span { background: #888; }
+
+  /* Item content */
+  .item-content { flex: 1; min-width: 0; }
+
+  .item-title {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+  }
+
+  .item-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Move arrows (fallback for small screens) */
+  .item-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .btn-move {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 3px 6px;
+    font-size: 13px;
+    line-height: 1;
+    border-radius: 4px;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.1s, background 0.1s;
+  }
+  .btn-move:hover { color: var(--text); background: var(--border); }
+
+  .btn-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px 6px;
+    font-size: 14px;
+    line-height: 1;
+    border-radius: 4px;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s;
+  }
+  .btn-delete:hover { color: #e8574a; }
+
+  /* Show more / less */
+  .show-more-row {
+    padding: 6px 8px 10px;
+    text-align: center;
+  }
+
+  .btn-show-more {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-show-more:hover { color: var(--text); border-color: var(--muted); }
+
+  /* Add item form */
+  .add-form {
+    padding: 8px 8px 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .add-row { display: flex; gap: 6px; }
+
+  .add-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 0;
+    -webkit-appearance: none;
+  }
+  .add-input:focus { border-color: var(--muted); }
+  .add-input::placeholder { color: var(--muted); }
+
+  .btn-add {
+    background: var(--text);
+    border: none;
+    border-radius: 8px;
+    color: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 20px;
+    font-weight: 300;
+    padding: 0 14px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-add:hover { opacity: 0.85; }
+
+  .series-toggle {
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+    letter-spacing: 0.02em;
+    padding: 0 2px;
+  }
+  .series-toggle:hover { color: var(--text); }
+
+  .series-row {
+    display: none;
+    gap: 6px;
+  }
+  .series-row.visible { display: flex; }
+
+  /* Done badge */
+  .badge-done {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  /* Completed items */
+  .item.done .item-title { text-decoration: line-through; color: var(--muted); }
+
+  .item-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+  }
+  .item.done .item-checkbox {
+    background: var(--muted);
+    border-color: var(--muted);
+  }
+  .item-checkbox::after {
+    content: '✓';
+    font-size: 10px;
+    color: var(--bg);
+    display: none;
+  }
+  .item.done .item-checkbox::after { display: block; }
+  .books .item-checkbox:hover { border-color: var(--accent-books); }
+  .movies .item-checkbox:hover { border-color: var(--accent-movies); }
+  .tv .item-checkbox:hover { border-color: var(--accent-tv); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 18px 12px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    font-style: italic;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--text);
+    color: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 20px;
+    z-index: 900;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Queue</div>
+  <div class="header-actions">
+    <button class="btn-icon" onclick="doExport()">Export</button>
+    <button class="btn-icon" onclick="doImport()">Import</button>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Data ───────────────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { id: 'books',  label: 'Books',    accent: '#e8c547', placeholder: 'Add a book…' },
+  { id: 'movies', label: 'Movies',   accent: '#e8574a', placeholder: 'Add a movie…' },
+  { id: 'tv',     label: 'TV Shows', accent: '#4ab8e8', placeholder: 'Add a show…' },
+  { id: 'games',  label: 'Games',    accent: '#7ed87e', placeholder: 'Add a game…' },
+];
+
+const DEFAULT_SHOW = 3;
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem('queue-data');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return {
+    books:  [],
+    movies: [],
+    tv:     [],
+    games:  [],
+  };
+}
+
+function saveData() {
+  try {
+    localStorage.setItem('queue-data', JSON.stringify(state));
+  } catch(e) {}
+}
+
+let state = loadData();
+
+// collapsed/expanded per category (default: expanded)
+let expanded = { books: true, movies: true, tv: true };
+// show-all state
+let showAll = { books: false, movies: false, tv: false };
+
+// ─── Render ─────────────────────────────────────────────────────────────────
+function render() {
+  saveData();
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  CATEGORIES.forEach(cat => main.appendChild(renderCategory(cat)));
+  attachSortable();
+}
+
+function renderCategory(cat) {
+  const items = state[cat.id];
+  const isExpanded = expanded[cat.id];
+  const isShowAll = showAll[cat.id];
+  const visible = isShowAll ? items : items.slice(0, DEFAULT_SHOW);
+  const hasMore = items.length > DEFAULT_SHOW;
+
+  const section = document.createElement('div');
+  section.className = `category ${cat.id}`;
+  section.dataset.cat = cat.id;
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'cat-header';
+  header.innerHTML = `
+    <span class="cat-label">${cat.label}</span>
+    <div class="cat-meta">
+      <span class="cat-count">${items.length}</span>
+      <span class="cat-chevron ${isExpanded ? 'open' : ''}">▾</span>
+    </div>
+  `;
+  header.addEventListener('click', () => {
+    expanded[cat.id] = !expanded[cat.id];
+    render();
+  });
+  section.appendChild(header);
+
+  if (!isExpanded) return section;
+
+  // List
+  const list = document.createElement('div');
+  list.className = 'item-list';
+  list.dataset.cat = cat.id;
+  list.id = `list-${cat.id}`;
+
+  if (items.length === 0) {
+    list.innerHTML = `<div class="empty-state">Nothing queued yet.</div>`;
+  } else {
+    visible.forEach((item, visIdx) => {
+      const realIdx = isShowAll ? visIdx : visIdx; // index in visible = index in slice
+      // We need the real index in the full array
+      const trueIdx = items.indexOf(item);
+      list.appendChild(renderItem(item, trueIdx, cat));
+    });
+  }
+  section.appendChild(list);
+
+  // Show more row
+  if (hasMore) {
+    const row = document.createElement('div');
+    row.className = 'show-more-row';
+    row.innerHTML = `<button class="btn-show-more">${isShowAll ? `▴ Show less` : `▾ Show all ${items.length}`}</button>`;
+    row.querySelector('button').addEventListener('click', () => {
+      showAll[cat.id] = !showAll[cat.id];
+      render();
+    });
+    section.appendChild(row);
+  }
+
+  // Add form
+  section.appendChild(renderAddForm(cat));
+
+  return section;
+}
+
+function renderItem(item, idx, cat) {
+  const div = document.createElement('div');
+  div.className = `item${item.done ? ' done' : ''}`;
+  div.dataset.idx = idx;
+
+  div.innerHTML = `
+    <div class="drag-handle" title="Drag to reorder">
+      <span></span><span></span>
+    </div>
+    <button class="item-checkbox" title="Mark done"></button>
+    <div class="item-content">
+      <div class="item-title">${escHtml(item.title)}</div>
+      ${item.series ? `<div class="item-sub">${escHtml(item.series)}</div>` : ''}
+    </div>
+    <div class="item-actions">
+      <button class="btn-move" title="Move up" data-dir="up">▲</button>
+      <button class="btn-move" title="Move down" data-dir="down">▼</button>
+    </div>
+    <button class="btn-delete" title="Remove">✕</button>
+  `;
+
+  div.querySelector('.item-checkbox').addEventListener('click', () => {
+    state[cat.id][idx].done = !state[cat.id][idx].done;
+    render();
+  });
+
+  div.querySelector('.btn-delete').addEventListener('click', () => {
+    state[cat.id].splice(idx, 1);
+    render();
+  });
+
+  div.querySelectorAll('.btn-move').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const dir = btn.dataset.dir;
+      const arr = state[cat.id];
+      if (dir === 'up' && idx > 0) {
+        [arr[idx-1], arr[idx]] = [arr[idx], arr[idx-1]];
+      } else if (dir === 'down' && idx < arr.length - 1) {
+        [arr[idx], arr[idx+1]] = [arr[idx+1], arr[idx]];
+      }
+      render();
+    });
+  });
+
+  return div;
+}
+
+function renderAddForm(cat) {
+  const form = document.createElement('div');
+  form.className = 'add-form';
+
+  const hasSeries = cat.id === 'books';
+
+  form.innerHTML = `
+    <div class="add-row">
+      <input class="add-input" id="input-${cat.id}" placeholder="${cat.placeholder}" type="text" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="btn-add" title="Add">+</button>
+    </div>
+    ${hasSeries ? `
+    <span class="series-toggle" id="toggle-series-${cat.id}">＋ Add series / progress</span>
+    <div class="series-row" id="series-row-${cat.id}">
+      <input class="add-input" id="series-${cat.id}" placeholder="e.g. Wheel of Time — Book 3 of 14" type="text" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>` : ''}
+  `;
+
+  const titleInput = form.querySelector(`#input-${cat.id}`);
+  const btn = form.querySelector('.btn-add');
+
+  function doAdd() {
+    const title = titleInput.value.trim();
+    if (!title) return;
+    const seriesEl = document.getElementById(`series-${cat.id}`);
+    const series = seriesEl ? seriesEl.value.trim() : '';
+    state[cat.id].push({ title, series, done: false });
+    if (state[cat.id].length > DEFAULT_SHOW) showAll[cat.id] = true;
+    render();
+    // Re-focus after render
+    setTimeout(() => {
+      const el = document.getElementById(`input-${cat.id}`);
+      if (el) el.focus();
+    }, 50);
+  }
+
+  titleInput.addEventListener('keydown', e => { if (e.key === 'Enter') doAdd(); });
+  btn.addEventListener('click', doAdd);
+
+  if (hasSeries) {
+    const toggle = form.querySelector(`#toggle-series-${cat.id}`);
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        const row = document.getElementById(`series-row-${cat.id}`);
+        if (row) {
+          row.classList.toggle('visible');
+          toggle.textContent = row.classList.contains('visible') ? '－ Hide series field' : '＋ Add series / progress';
+        }
+      });
+    }
+  }
+
+  return form;
+}
+
+// ─── Sortable ────────────────────────────────────────────────────────────────
+function attachSortable() {
+  CATEGORIES.forEach(cat => {
+    const el = document.getElementById(`list-${cat.id}`);
+    if (!el) return;
+    Sortable.create(el, {
+      handle: '.drag-handle',
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      onEnd(evt) {
+        const arr = state[cat.id];
+        const isShowAll = showAll[cat.id];
+        const from = evt.oldIndex;
+        const to = evt.newIndex;
+        if (from === to) return;
+        // Indices are within the visible slice if not showAll
+        if (!isShowAll) {
+          // Clamp to slice
+          const item = arr.splice(from, 1)[0];
+          arr.splice(to, 0, item);
+        } else {
+          const item = arr.splice(from, 1)[0];
+          arr.splice(to, 0, item);
+        }
+        render();
+      }
+    });
+  });
+}
+
+// ─── Export (file download) ───────────────────────────────────────────────────
+function doExport() {
+  const date = new Date().toISOString().slice(0, 10);
+  const filename = `queue-${date}.json`;
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`Saved ${filename}`);
+}
+
+// ─── Import (file picker) ─────────────────────────────────────────────────────
+function doImport() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (parsed.books !== undefined || parsed.movies !== undefined || parsed.tv !== undefined) {
+          state = {
+            books: parsed.books || [],
+            movies: parsed.movies || [],
+            tv: parsed.tv || [],
+            games: parsed.games || [],
+          };
+          saveData();
+          render();
+          showToast('Queue restored!');
+        } else {
+          showToast('Invalid file — not a Queue backup.');
+        }
+      } catch(err) {
+        showToast('Could not read file — try again.');
+      }
+    };
+    reader.readAsText(file);
+  });
+  input.click();
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal')) return;
+  document.getElementById('modal').classList.remove('open');
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>

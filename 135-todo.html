@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="1·3·5">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>1·3·5 Today</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #1c1c1e;
+    --surface: #2c2c2e;
+    --surface-raised: #3a3a3c;
+    --border: #3a3a3c;
+    --border-subtle: #2c2c2e;
+    --ink: #f0ede8;
+    --ink-dim: #98958f;
+    --big: #e5837a;
+    --med: #6db887;
+    --sml: #7aabe5;
+    --done: #5a5754;
+    --strike: #4a4745;
+  }
+
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .page {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  header {
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--ink);
+  }
+
+  .tagline {
+    font-size: 0.7rem;
+    color: var(--ink-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.6;
+  }
+
+  .section {
+    margin-bottom: 2.5rem;
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .badge {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1;
+  }
+
+  .big .badge { color: var(--big); }
+  .med .badge { color: var(--med); }
+  .sml .badge { color: var(--sml); }
+
+  .section-name {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  .task-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-height: 32px;
+    padding: 2px 0;
+    position: relative;
+  }
+
+  .task-row + .task-row {
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  /* Custom checkbox */
+  .cb-wrap {
+    flex-shrink: 0;
+    width: 20px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .cb-wrap input[type="checkbox"] {
+    display: none;
+  }
+
+  .cb-box {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 2px;
+    position: relative;
+    transition: border-color 0.15s, background 0.15s;
+    background: transparent;
+  }
+
+  .big .cb-box { border-color: var(--big); }
+  .med .cb-box { border-color: var(--med); }
+  .sml .cb-box { border-color: var(--sml); }
+
+  .cb-wrap input:checked + .cb-box {
+    background: var(--done);
+    border-color: var(--done);
+  }
+
+  .cb-wrap input:checked + .cb-box::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid var(--bg);
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+  }
+
+  /* Editable task text */
+  .task-text {
+    flex: 1;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.875rem;
+    line-height: 32px;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    min-height: 32px;
+    height: 32px;
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 0;
+    transition: color 0.2s;
+    caret-color: var(--ink);
+  }
+
+  .task-text::placeholder {
+    color: var(--done);
+    font-style: italic;
+  }
+
+  .task-text:focus {
+    white-space: pre-wrap;
+    height: auto;
+    overflow: visible;
+  }
+
+  .task-row.done .task-text {
+    color: var(--done);
+    text-decoration: line-through;
+    text-decoration-color: var(--strike);
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 2px;
+    background: var(--surface-raised);
+    border-radius: 2px;
+    margin-top: 0.5rem;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  .big .progress-fill { background: var(--big); }
+  .med .progress-fill { background: var(--med); }
+  .sml .progress-fill { background: var(--sml); }
+
+  /* Footer */
+  footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .total-progress {
+    font-size: 0.7rem;
+    color: var(--ink-dim);
+    letter-spacing: 0.08em;
+  }
+
+  .total-progress span {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .footer-btns {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .reset-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .reset-btn:hover {
+    color: var(--big);
+    border-color: var(--big);
+  }
+
+  .reset-btn.clear-done:hover {
+    color: var(--med);
+    border-color: var(--med);
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 1rem 0.75rem 3rem; }
+    header { flex-direction: column; gap: 0.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>1·3·5</h1>
+    <div class="tagline">1 big thing<br>3 medium things<br>5 small things</div>
+  </header>
+
+  <div id="app"></div>
+
+  <footer>
+    <div class="total-progress">
+      <span id="done-count">0</span> of <span id="total-count">9</span> complete
+    </div>
+    <div class="footer-btns">
+      <button class="reset-btn clear-done" onclick="clearDone()">✕ clear done</button>
+      <button class="reset-btn" onclick="resetList()">↺ reset list</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+const SECTIONS = [
+  { id: 'big', label: '1', name: 'Big', count: 1, cls: 'big' },
+  { id: 'med', label: '3', name: 'Medium', count: 3, cls: 'med' },
+  { id: 'sml', label: '5', name: 'Small',  count: 5, cls: 'sml' },
+];
+
+const PLACEHOLDERS = {
+  big: ['the one thing that matters most today'],
+  med: ['important but not urgent', 'needs doing today', 'worth your attention'],
+  sml: ['quick win', 'small task', 'easy to knock out', 'five minutes tops', 'while you\'re at it'],
+};
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('135-tasks') || '{}'); } 
+  catch { return {}; }
+}
+
+function saveState(state) {
+  localStorage.setItem('135-tasks', JSON.stringify(state));
+}
+
+let state = loadState();
+
+function getKey(sectionId, i) { return `${sectionId}-${i}`; }
+
+function renderApp() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  SECTIONS.forEach(sec => {
+    const div = document.createElement('div');
+    div.className = `section ${sec.cls}`;
+
+    const label = document.createElement('div');
+    label.className = 'section-label';
+    label.innerHTML = `<span class="badge">${sec.label}</span><span class="section-name">${sec.name}</span>`;
+    div.appendChild(label);
+
+    let checked = 0;
+    for (let i = 0; i < sec.count; i++) {
+      const key = getKey(sec.id, i);
+      const taskData = state[key] || { text: '', done: false };
+      if (taskData.done) checked++;
+
+      const row = document.createElement('div');
+      row.className = 'task-row' + (taskData.done ? ' done' : '');
+      row.dataset.key = key;
+
+      const cbWrap = document.createElement('label');
+      cbWrap.className = 'cb-wrap';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = taskData.done;
+      cb.addEventListener('change', () => {
+        const k = row.dataset.key;
+        state[k] = state[k] || {};
+        state[k].done = cb.checked;
+        row.className = 'task-row' + (cb.checked ? ' done' : '');
+        saveState(state);
+        updateProgress();
+      });
+
+      const box = document.createElement('span');
+      box.className = 'cb-box';
+      cbWrap.appendChild(cb);
+      cbWrap.appendChild(box);
+
+      const ta = document.createElement('textarea');
+      ta.className = 'task-text';
+      ta.rows = 1;
+      ta.value = taskData.text || '';
+      ta.placeholder = PLACEHOLDERS[sec.id][i % PLACEHOLDERS[sec.id].length];
+      ta.spellcheck = true;
+
+      ta.addEventListener('input', () => {
+        const k = row.dataset.key;
+        state[k] = state[k] || {};
+        state[k].text = ta.value;
+        saveState(state);
+      });
+
+      ta.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); }
+      });
+
+      row.appendChild(cbWrap);
+      row.appendChild(ta);
+      div.appendChild(row);
+    }
+
+    // Progress bar
+    const pbar = document.createElement('div');
+    pbar.className = 'progress-bar';
+    const pfill = document.createElement('div');
+    pfill.className = 'progress-fill';
+    pfill.id = `progress-${sec.id}`;
+    pfill.style.width = `${(checked / sec.count) * 100}%`;
+    pbar.appendChild(pfill);
+    div.appendChild(pbar);
+
+    app.appendChild(div);
+  });
+
+  updateProgress();
+}
+
+function updateProgress() {
+  let totalDone = 0;
+  let total = 0;
+  SECTIONS.forEach(sec => {
+    let checked = 0;
+    for (let i = 0; i < sec.count; i++) {
+      const k = getKey(sec.id, i);
+      if (state[k]?.done) checked++;
+    }
+    total += sec.count;
+    totalDone += checked;
+    const bar = document.getElementById(`progress-${sec.id}`);
+    if (bar) bar.style.width = `${(checked / sec.count) * 100}%`;
+  });
+  document.getElementById('done-count').textContent = totalDone;
+  document.getElementById('total-count').textContent = total;
+}
+
+function resetList() {
+  if (!confirm('Reset everything? All tasks and checks will be cleared.')) return;
+  SECTIONS.forEach(sec => {
+    for (let i = 0; i < sec.count; i++) {
+      const k = getKey(sec.id, i);
+      state[k] = { text: '', done: false };
+    }
+  });
+  saveState(state);
+  renderApp();
+}
+
+function clearDone() {
+  // Count how many completed tasks have text
+  let count = 0;
+  SECTIONS.forEach(sec => {
+    for (let i = 0; i < sec.count; i++) {
+      const k = getKey(sec.id, i);
+      if (state[k]?.done && state[k]?.text) count++;
+    }
+  });
+  if (count === 0) {
+    // Nothing to clear — no confirm needed
+    SECTIONS.forEach(sec => {
+      for (let i = 0; i < sec.count; i++) {
+        const k = getKey(sec.id, i);
+        if (state[k]?.done) { state[k].done = false; state[k].text = ''; }
+      }
+    });
+    saveState(state);
+    renderApp();
+    return;
+  }
+  if (!confirm(`Clear ${count} completed task${count !== 1 ? 's' : ''}? This removes their text too.`)) return;
+  SECTIONS.forEach(sec => {
+    for (let i = 0; i < sec.count; i++) {
+      const k = getKey(sec.id, i);
+      if (state[k]?.done) { state[k].done = false; state[k].text = ''; }
+    }
+  });
+  saveState(state);
+  renderApp();
+}
+
+renderApp();
+</script>
+</body>
+</html>
