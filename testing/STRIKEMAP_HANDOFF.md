@@ -1,53 +1,100 @@
 # Strikemap — Project Handoff
-*Status: Design complete, ready for development*
+*Status: Core functionality complete — UI restructure + polish next*
 
 ---
 
 ## What This Is
 
-A single-file static HTML app for tracking lightning strikes in real time. You point your phone at a lightning flash, tap a button, then tap again when you hear thunder. The app calculates distance and bearing, logs each strike, and plots uncertainty ellipses on a live map showing the storm's progression.
+A single-file static HTML app for tracking lightning strikes in real time. Point your phone at a lightning flash, tap a button, then tap again when you hear thunder. The app calculates distance and bearing, logs each strike, and plots uncertainty regions on a live map showing the storm's progression.
 
 Designed to be hosted on GitHub Pages and shared with a few people. No server, no API keys, no accounts.
 
 ---
 
-## Two-Screen App
+## Three-Screen App (after Session 4)
 
 ### Screen 1: RECORD
-- Compass display showing live phone heading (locks on flash tap)
-- **SAW FLASH** button — locks heading, starts timer
-- **HEARD THUNDER** button — stops timer, calculates distance, logs strike
-- Live calc display: delay (seconds), distance (miles), bearing (degrees + cardinal)
-- Observation log (right panel): each strike with distance, delay, bearing, time-ago, color-coded by age
-- Distance trend: bar chart + approaching/receding/steady indicator
+- Compass display showing live phone heading — rotates in real time, locks on tap after FLASH
+- **COUCH MODE toggle** — disables bearing entirely; no compass shown, no bearing recorded; strike saves with `bear: null`
+- **SAW FLASH** button — arms compass lock (unless couch mode), starts timer, requests compass permission on iOS
+- **HEARD THUNDER** button — stops timer, calculates distance, saves strike to localStorage
+- Live calc display: delay (seconds), distance (miles), bearing (degrees + cardinal, or "COUCH MODE" if toggled)
+- Full-width single column — no right panel split (phone layout)
 
-### Screen 2: MAP
-- Static Leaflet/OSM map, locked (no pan/zoom interaction)
-- Centered on user's geolocation, zoom level 12 (~10–12mi wide view)
-- All interaction disabled except one RE-CENTER button (insurance)
-- Each strike plotted as an **ellipse centered on the computed strike point**
-- Bearing lines (faint dashed) from user to each strike center
+### Screen 2: TRENDS
+- Distance trend bar chart (up to 8 most recent strikes)
+- Approaching / receding / steady indicator
+- Full strike log with per-entry delete (✕ button, no confirm needed for single strike)
+- **CLEAR ALL** button — requires confirm dialog before wiping localStorage
+- Timestamps refresh on a 30s interval regardless of active tab
+
+### Screen 3: MAP
+- Live Leaflet/CartoDB dark tiles, locked (no pan/zoom/drag)
+- Centered on user's geolocation at zoom 12 (~10–12mi wide view)
+- Strikes with bearing → pizza-crust uncertainty polygon + center dot + bearing line
+- Strikes without bearing (couch mode or no compass) → **full circle ring** at `distMi` radius centered on user, same age color, no bearing line
+- Age filter buttons: ALL / 10 MIN / 30 MIN + RE-CENTER button
+- DISTANT notice banner when any strikes exceed 6.2mi (logged but not plotted)
 - Bottom strip: obs count, closest strike, direction, trend, approaching alert
+- Legend overlay — present, positioned bottom-right, out of the way; consider collapsible tap if it occludes strikes
+- No CLEAR button on map — all data management lives on TRENDS tab
 
 ---
 
-## Core Geometry — Important
+## Core Geometry
 
-The ellipses represent measurement uncertainty **around the computed strike point**, not a zone between the user and the strike. The strike is in the center of the ellipse.
+### Pizza Crust (bearing known)
 
-**Radial axis (depth, along bearing):**
-- Source: ±250ms timing error
-- 250ms × 343 m/s = ±86 meters
-- This is the *short* axis — timing is pretty accurate
+Two error sources, both referenced from the observer's position:
 
-**Tangential axis (width, perpendicular to bearing):**
-- Source: ±5° compass wobble
-- Width = 2 × sin(5°) × distance
-- Grows with distance — this is the *long* axis
-- At 1.4mi: ~±215m wide
-- At 3.1mi: ~±475m wide
+**Bearing error (±5°):**
+- Source: compass wobble
+- Wedge of two rays at `bearing ± 5°` from observer
+- Width grows linearly with distance: ~0.24mi at 1.4mi, ~0.52mi at 3mi
 
-Ellipse is rotated to the bearing angle so its major axis is always perpendicular to the line of sight.
+**Timing error (±500ms):**
+- Source: human tap reaction on FLASH and THUNDER
+- `±500ms × 343 m/s = ±171.5m ≈ ±0.107mi`
+- Inner arc at `dist − 0.107mi`, outer arc at `dist + 0.107mi`
+- Depth is constant regardless of distance
+
+Shape: outer arc (left→right) + inner arc (right→left) = closed `L.polygon` of ~26 points via `strikeLatLon()`. Collapses to a pure wedge if `dist < 0.107mi` (strike under ~560ft). Center dot always plotted.
+
+```javascript
+function makePizzaCrust(userLat, userLon, bearingDeg, distMi, color) {
+  const DELTA_D_MI = 0.5 * 343 * 0.000621371;  // ~0.107 mi
+  const DELTA_B    = 5;                          // ±5°
+  const ARC_STEPS  = 12;
+
+  const innerDist = Math.max(0, distMi - DELTA_D_MI);
+  const outerDist = distMi + DELTA_D_MI;
+  const bearLeft  = bearingDeg - DELTA_B;
+  const bearRight = bearingDeg + DELTA_B;
+
+  const points = [];
+  for (let i = 0; i <= ARC_STEPS; i++) {
+    const b = bearLeft + (bearRight - bearLeft) * (i / ARC_STEPS);
+    points.push(strikeLatLon(userLat, userLon, b, outerDist));
+  }
+  for (let i = ARC_STEPS; i >= 0; i--) {
+    const b = bearLeft + (bearRight - bearLeft) * (i / ARC_STEPS);
+    points.push(strikeLatLon(userLat, userLon, b, innerDist));
+  }
+  return L.polygon(points, { color, weight:1.5, fillColor:color, fillOpacity:0.20, interactive:false });
+}
+```
+
+### Bullseye Ring (bearing null — couch mode or no compass)
+
+When `bear === null`, plot a full circle at `distMi` centered on the user. Represents "definitely this far away, direction unknown." Same age color, reduced opacity, dashed stroke. No bearing line. Center dot still plotted.
+
+```javascript
+L.circle([userLat, userLon], {
+  radius: distMi * 1609.34,
+  color, weight:1.5, fillColor:color, fillOpacity:0.10,
+  dashArray:'4 4', interactive:false
+})
+```
 
 ---
 
@@ -60,19 +107,17 @@ Ellipse is rotated to the bearing angle so its major axis is always perpendicula
 | 15 seconds | ~3 miles |
 | 30 seconds | ~6.3 miles (practical outer limit) |
 
-Strikes beyond ~6 miles (>30s delay): log them, show "DISTANT" notice on map tab, do not plot ellipse. The map at zoom 12 naturally covers ~5–6 mile radius, so this aligns cleanly.
+Strikes beyond ~6.2 miles: logged normally, not plotted, DISTANT banner shown on map tab.
 
 ---
 
 ## Age / Color Scheme
 
-| Age | Color | Hex |
-|---|---|---|
-| < 5 min | Yellow | `#f5c842` |
-| 5–15 min | Orange | `#f08030` |
-| > 15 min | Blue-grey | `#4a7aaa` |
-
-Applied to: log entry left border, ellipse stroke/fill, bearing lines, trend bars.
+| Age | Color | Hex | Applied to |
+|---|---|---|---|
+| < 5 min | Yellow | `#f5c842` | log border, pizza crust / ring, bearing line, trend bar |
+| 5–15 min | Orange | `#f08030` | same |
+| > 15 min | Blue-grey | `#4a7aaa` | same |
 
 ---
 
@@ -80,58 +125,22 @@ Applied to: log entry left border, ellipse stroke/fill, bearing lines, trend bar
 
 | Concern | Solution |
 |---|---|
-| Map tiles | Leaflet 1.9.4 + OpenStreetMap (CDN, free, no key) |
+| Map tiles | Leaflet 1.9.4 + CartoDB dark tiles (CDN, free, no key) |
 | Geolocation | `navigator.geolocation.getCurrentPosition()` |
 | Compass | `DeviceOrientationEvent` / `webkitCompassHeading` (iOS) |
-| Storage | `localStorage` — session only, CLEAR button wipes it |
+| Storage | `localStorage` key `sm_strikes` — session only, CLEAR wipes it |
 | Hosting | GitHub Pages (single HTML file) |
-| External data | None — Blitzortung overlay explicitly deferred |
+| External data | `fetchExternalStrikes()` stub returns `[]` — Blitzortung hook deferred |
 
 ---
 
-## Compass / iOS Note
+## Compass Flow (iOS)
 
-On iOS 13+, `DeviceOrientationEvent.requestPermission()` must be called from a user gesture. The app needs a one-time **"Enable Compass"** button or the compass permission must be requested on the first FLASH tap. Design this carefully — if the user hasn't granted compass access, bearing will be null and should fall back gracefully (log the strike with a "no bearing" flag, skip the map plot or plot on a question-mark ring).
+On iOS 13+, `DeviceOrientationEvent.requestPermission()` must be called from a user gesture. Permission is requested on the first SAW FLASH tap — no separate button needed. If denied or unavailable, bearing is stored as `null` (same behavior as couch mode). Log entry shows `--- NO HDG`.
 
----
+Heading is smoothed over an 8-sample circular buffer to reduce jitter. Heading locks when the user taps the compass ring while armed; tap again to unlock.
 
-## Map Configuration
-
-```javascript
-const map = L.map('map', {
-  center: [userLat, userLon],
-  zoom: 12,
-  zoomControl: false,
-  dragging: false,
-  touchZoom: false,
-  doubleClickZoom: false,
-  scrollWheelZoom: false,
-  boxZoom: false,
-  keyboard: false
-});
-```
-
-One RE-CENTER button in the controls strip restores `setView([userLat, userLon], 12)`.
-
----
-
-## Ellipse Rendering on Leaflet
-
-Use `L.ellipse` from the leaflet-ellipse plugin (CDN available), or approximate with a rotated `L.polygon` built from parametric ellipse points. The polygon approach has no additional dependency:
-
-```javascript
-function ellipsePolygon(centerLat, centerLon, bearingDeg, distMi) {
-  const SOUND_MS = 343;
-  const TIMING_ERR_S = 0.25;
-  const BEARING_ERR_DEG = 5;
-  
-  const radialM = TIMING_ERR_S * SOUND_MS;           // short axis (meters)
-  const tangM   = Math.sin(BEARING_ERR_DEG * Math.PI/180) * distMi * 1609.34; // long axis
-  
-  // build ellipse points in local coords, rotate to bearing, project to lat/lon
-  // return as L.polygon(points, { color, fillColor, ... })
-}
-```
+**Couch mode** bypasses the compass entirely — no permission request, no lock UI, bearing always `null`.
 
 ---
 
@@ -139,50 +148,106 @@ function ellipsePolygon(centerLat, centerLon, bearingDeg, distMi) {
 
 ```javascript
 // Key: 'sm_strikes'
-// Value: JSON array of strike objects
+// Value: JSON array, newest first
 [
   {
-    ts: 1711234567890,   // Date.now() at thunder tap
-    delay: 2.3,          // seconds flash-to-thunder
-    distMi: 1.42,        // computed miles
-    bear: 43,            // degrees, null if compass unavailable
-    card: "NNE"          // cardinal string, null if no bearing
+    ts:     1711234567890,  // Date.now() at THUNDER tap
+    delay:  2.3,            // seconds flash-to-thunder (1 decimal)
+    distMi: 1.42,           // computed miles (2 decimal)
+    bear:   43,             // integer degrees, null if couch mode or no compass
+    card:   "NNE"           // cardinal string, null if no bearing
   }
 ]
 ```
 
----
-
-## Deferred / Out of Scope
-
-- **Blitzortung / external strike data**: Hook exists as `fetchExternalStrikes()` returning `[]`. Add later if desired.
-- **Pinch-to-zoom**: Explicitly excluded. Static map is intentional.
-- **Google Sheets logging**: Not needed. localStorage covers the storm window.
-- **Multi-session history**: Not needed. CLEAR and start fresh each storm.
-- **Triangulation**: Single-observer bearing + distance only. True triangulation needs 2+ observers at known locations.
+Single-strike delete: filter array by `ts`, save, re-render log + map.
 
 ---
 
-## Files in This Package
+## Files
 
 | File | Description |
 |---|---|
 | `STRIKEMAP_HANDOFF.md` | This document |
-| `strikemap-mockup.html` | Full two-screen static mockup with your James Island screenshot as map background. Shows correct ellipse geometry. Flash/Thunder buttons wired for timing demo. |
+| `strikemap-mockup.html` | Static design mockup — reference only, do not edit |
+| `strikemap.html` | **Live file — source of truth for all implementation** |
+
+**Always read `strikemap.html` first. The handoff doc describes intent; the live file is what's actually built.**
 
 ---
 
-## Starting Point for Development
+## What's Done (Sessions 1–3)
 
-1. Start from `strikemap-mockup.html` — all UI, layout, color system, and geometry logic is there
-2. Replace the static `<img>` map with Leaflet init
-3. Wire geolocation to map center
-4. Wire compass permission flow
-5. Replace hardcoded mock strikes with localStorage read/write
-6. Replace SVG ellipse markup with computed `L.polygon` calls
-7. Add the `fetchExternalStrikes()` stub (returns `[]`)
-8. Test on actual phone — compass and geolocation only work over HTTPS
+- [x] Full UI — layout, typography, dark color system
+- [x] Compass: live `DeviceOrientationEvent`, 8-sample smoothing, tap-to-lock, iOS permission flow
+- [x] SAW FLASH / HEARD THUNDER timing + calculation
+- [x] localStorage read/write/clear
+- [x] Strike log with age classes and relative timestamps
+- [x] Distance trend bar chart + approaching/receding/steady
+- [x] Leaflet map: CartoDB dark tiles, geolocation centering, locked interaction
+- [x] Pizza-crust uncertainty polygons (annular sector, correct polar geometry)
+- [x] Bearing lines from user to each strike center
+- [x] Center dot + label on most recent strike
+- [x] Age filter buttons (ALL / 10 MIN / 30 MIN) scoped with `data-age`
+- [x] DISTANT notice banner
+- [x] APPROACHING alert — JS-controlled, starts hidden
+- [x] `fetchExternalStrikes()` stub
+- [x] OBS badge in header
 
 ---
 
-*Design conversations: Claude.ai chat, March 2026*
+## SESSION 4 — START HERE
+
+Read `strikemap.html` first. It is the source of truth. Do all of the following in one pass.
+
+### 1. Three-tab nav (RECORD / TRENDS / MAP)
+- Add TRENDS button between RECORD and MAP in the header nav
+- Add `#screen-trends` section
+- Move trend bar chart + strike log into TRENDS screen
+- RECORD becomes single full-width column: compass + couch toggle + buttons + calc box only
+- Wire `showScreen('trends')` to call `renderLog()` and `renderTrend()` on activation
+
+### 2. Couch mode
+- Toggle button on RECORD screen, between compass and SAW FLASH
+- When active: hide compass ring, show "COUCH MODE — NO BEARING" status label, set `couchMode = true`
+- SAW FLASH in couch mode: skip compass permission, skip bearing lock, `bear` saves as `null`
+- Calc box bearing row shows "COUCH MODE" instead of degrees
+- Map: `bear === null` strikes render as `L.circle` ring at `distMi * 1609.34` meters radius — dashed, age color, `fillOpacity: 0.10`, no bearing line, center dot still plotted
+
+### 3. UI initialization bugs
+- **HEARD THUNDER button** — remove `armed` class from HTML; starts inert, JS adds it on FLASH tap
+- **Calc box bearing** — add `id="c-bearing"` directly in HTML, remove the DOM-query patch in DOMContentLoaded
+- **Trend bars** — initialize empty on load; call `renderTrend([])` or equivalent in DOMContentLoaded
+- **Map strip** — set all stat values to `—` in HTML; `updateMapStrip()` handles real values
+- **Timestamp interval** — remove the screen check; run the 30s refresh regardless of active tab
+- **Strike label clipping** — use bearing quadrant to set `iconAnchor` so label stays on-screen
+
+### 4. CLEAR / delete UX
+- CLEAR ALL on TRENDS tab only — `confirm()` dialog, then wipe localStorage, re-render log + map
+- Per-entry ✕ on each log row — no confirm, delete by `ts`, re-render
+- Remove CLEAR button from RECORD screen
+- No CLEAR on MAP tab
+
+### 5. Map legend
+- Check legend visibility on a 390px wide screen (common iPhone width)
+- If it occludes strike zones, make it collapsible: tap to toggle, default collapsed
+
+---
+
+## After Session 4
+
+- [ ] Field test on iOS — compass permission, heading accuracy, couch mode, tap latency
+- [ ] Field test on Android — `deviceorientation` varies; test Chrome Android + Firefox
+- [ ] Deploy to GitHub Pages (`strikemap.html` → `index.html`, enable Pages, verify HTTPS)
+- [ ] Geolocation + DeviceOrientation require HTTPS — do not test on `file://`
+
+## Deferred / Out of Scope
+
+- **Blitzortung overlay** — `fetchExternalStrikes()` returns `[]`; wire later if desired
+- **Pinch-to-zoom** — explicitly excluded, static map is intentional
+- **Multi-session history** — not needed, CLEAR and start fresh each storm
+- **Triangulation** — single observer only; needs 2+ observers at known positions
+
+---
+
+*Development sessions: Claude.ai, March–May 2026*
