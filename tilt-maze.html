@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="screen-orientation" content="portrait">
 <meta name="theme-color" content="#0d0d0f">
+<!-- iOS PWA / fullscreen hints -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tilt Maze">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Tilt Maze</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,9 +40,33 @@
     color: var(--text);
     touch-action: none;
     user-select: none;
-    /* Portrait lock: prevent rotation */
     position: fixed;
     inset: 0;
+  }
+
+  /* On wide screens (desktop landscape), constrain to a centered portrait column */
+  @media screen and (min-aspect-ratio: 1/1) and (pointer: fine) {
+    body {
+      width: auto;
+      left: 50%;
+      transform: translateX(-50%);
+      aspect-ratio: 9 / 16;
+      max-height: 100vh;
+    }
+  }
+
+  /* On mobile held sideways: rotate back to portrait */
+  @media screen and (orientation: landscape) and (pointer: coarse) {
+    body {
+      transform: rotate(-90deg);
+      transform-origin: left top;
+      width: 100vh;
+      height: 100vw;
+      position: fixed;
+      top: 100%;
+      left: 0;
+      overflow: hidden;
+    }
   }
 
   .screen {
@@ -47,7 +76,7 @@
   }
   .hidden { display: none !important; }
 
-  /* ── START SCREEN ── */
+  /* -- START SCREEN -- */
   #screen-start { gap: 24px; background: var(--bg); }
 
   .title-wrap { text-align: center; line-height: 1; }
@@ -170,7 +199,7 @@
     transition: opacity 0.5s;
   }
 
-  /* ── GAME SCREEN ── */
+  /* -- GAME SCREEN -- */
   #screen-game {
     flex-direction: column; background: var(--bg);
     padding: 0; justify-content: flex-start;
@@ -217,7 +246,8 @@
   }
   .legend-ice    { background: rgba(168,216,240,0.18); color: var(--ice);    border: 1px solid rgba(168,216,240,0.3); }
   .legend-mud    { background: rgba(122,92,56,0.25);   color: #c8a070;       border: 1px solid rgba(122,92,56,0.5); }
-  .legend-warp   { background: rgba(192,64,240,0.18);  color: var(--teleport); border: 1px solid rgba(192,64,240,0.3); }
+  .legend-warp-a { background: rgba(0,200,240,0.18);   color: #64f0ff;         border: 1px solid rgba(0,200,240,0.35); }
+  .legend-warp-b { background: rgba(240,64,160,0.18);  color: #ff78c8;         border: 1px solid rgba(240,64,160,0.35); }
   .legend-bouncy { background: rgba(240,64,96,0.18);   color: var(--bouncy); border: 1px solid rgba(240,64,96,0.3); }
   .legend-mover  { background: rgba(240,128,32,0.18);  color: var(--mover);  border: 1px solid rgba(240,128,32,0.3); }
 
@@ -227,7 +257,7 @@
   }
   #gameCanvas { display: block; }
 
-  /* ── CALIBRATION OVERLAY ── */
+  /* -- CALIBRATION OVERLAY -- */
   #calib-overlay {
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
@@ -313,18 +343,7 @@
   }
   .lock-btn:active { transform: scale(0.97); }
 
-  /* ── WIN SCREEN ── */
-  #screen-win { background: var(--bg); gap: 24px; }
-
-  .win-title {
-    font-size: clamp(36px, 11vw, 60px); font-weight: 900;
-    color: var(--goal); letter-spacing: -1px;
-    animation: win-pulse 1s ease-in-out infinite alternate;
-  }
-  @keyframes win-pulse {
-    from { text-shadow: 0 0 20px rgba(64,224,160,0.3); }
-    to   { text-shadow: 0 0 60px rgba(64,224,160,0.8); }
-  }
+  /* -- WIN SCREEN -- */
   .win-level { font-size: clamp(14px,4vw,18px); color: var(--muted); letter-spacing: 3px; text-transform: uppercase; }
   .win-score {
     background: var(--surface); border: 1px solid var(--goal);
@@ -349,7 +368,7 @@
 
   #confetti { position: absolute; inset: 0; pointer-events: none; }
 
-  /* ── SCREEN TRANSITIONS ── */
+  /* -- SCREEN TRANSITIONS -- */
   .screen {
     transition: opacity 0.22s ease;
   }
@@ -365,7 +384,7 @@
     to   { opacity: 1; }
   }
 
-  /* ── LEVEL TITLE CARD ── */
+  /* -- LEVEL TITLE CARD -- */
   #level-title-card {
     position: fixed; inset: 0;
     display: flex; flex-direction: column;
@@ -397,7 +416,6 @@
     text-align: center; padding: 0 24px;
   }
 
-  /* ── WIN SCREEN TWEAKS ── */
   #screen-win { background: var(--bg); gap: 20px; }
 
   .win-title {
@@ -455,7 +473,7 @@
   }
   .win-menu-btn:active { color: var(--text); border-color: var(--muted); }
 
-  /* ── SOUND TOGGLE ── */
+  /* -- SOUND TOGGLE -- */
   #sound-toggle {
     position: fixed; top: 14px; right: 16px;
     background: transparent;
@@ -477,16 +495,16 @@
 </head>
 <body>
 
-<!-- ══════════ SOUND TOGGLE (global) ══════════ -->
-<button id="sound-toggle" title="Toggle Sound">🔊</button>
+<!-- SOUND TOGGLE (global) -->
+<button id="sound-toggle" title="Toggle Sound">SND ON</button>
 
-<!-- ══════════ LEVEL TITLE CARD ══════════ -->
+<!-- LEVEL TITLE CARD -->
 <div id="level-title-card">
   <div class="ltc-num" id="ltcNum">Level 1</div>
   <div class="ltc-name" id="ltcName">The Beginning</div>
 </div>
 
-<!-- ══════════ START SCREEN ══════════ -->
+<!-- START SCREEN -->
 <div id="screen-start" class="screen">
   <div class="title-wrap">
     <span class="title-big">TILT</span>
@@ -504,21 +522,21 @@
 
   <div class="menu-btns">
     <button class="start-btn" id="startBtn">NEW GAME</button>
-    <button class="continue-btn hidden" id="continueBtn">▶ Continue</button>
-    <button class="calib-btn" id="calibMenuBtn">⚙ Calibrate</button>
+    <button class="continue-btn hidden" id="continueBtn">> Continue</button>
+    <button class="calib-btn" id="calibMenuBtn">[*] Calibrate</button>
   </div>
 
-  <div class="save-info" id="saveInfo">Best level: —</div>
+  <div class="save-info" id="saveInfo">Best level: -</div>
 
   <div class="save-btns">
-    <button class="io-btn" id="downloadSaveBtn">⬇ Download Save</button>
-    <button class="io-btn" id="importSaveBtn">📂 Import Save</button>
+    <button class="io-btn" id="downloadSaveBtn">[down] Download Save</button>
+    <button class="io-btn" id="importSaveBtn">[open] Import Save</button>
   </div>
   <input type="file" id="importFileInput" accept=".json" style="display:none">
   <div class="import-flash" id="importFlash"></div>
 </div>
 
-<!-- ══════════ GAME SCREEN ══════════ -->
+<!-- GAME SCREEN -->
 <div id="screen-game" class="screen hidden">
   <div id="hud">
     <div class="hud-cell">
@@ -527,7 +545,7 @@
     </div>
     <div class="hud-cell">
       <div class="hud-label">Best</div>
-      <div class="hud-value" id="hudBest">—</div>
+      <div class="hud-value" id="hudBest">-</div>
     </div>
     <div class="hud-cell right">
       <div class="hud-label">Time</div>
@@ -535,15 +553,15 @@
     </div>
   </div>
   <div id="game-btns">
-    <button class="game-btn" id="restartBtn" title="Restart Level">↺ Restart</button>
-    <button class="game-btn" id="menuBtn" title="Back to Menu">⌂ Menu</button>
+    <button class="game-btn" id="restartBtn" title="Restart Level">[R] Restart</button>
+    <button class="game-btn" id="menuBtn" title="Back to Menu">[Home] Menu</button>
   </div>
   <div id="obstacle-legend"></div>
 
   <div id="canvas-wrap">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Calibration overlay — only shown in calib mode -->
+    <!-- Calibration overlay - only shown in calib mode -->
     <div id="calib-overlay" class="hidden">
       <div id="calib-panel">
         <div class="calib-hint">
@@ -560,21 +578,21 @@
         </div>
 
         <div class="calib-row">
-          <button class="zero-btn" id="zeroBtn">⊙ Zero drift<br>tap while holding still</button>
+          <button class="zero-btn" id="zeroBtn">[o] Zero drift<br>tap while holding still</button>
           <div class="zero-status" id="zeroStatus"></div>
         </div>
 
-        <button class="lock-btn" id="lockBtn">Lock it in →</button>
+        <button class="lock-btn" id="lockBtn">Lock it in -></button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════ WIN SCREEN ══════════ -->
+<!-- WIN SCREEN -->
 <div id="screen-win" class="screen hidden">
   <canvas id="confetti"></canvas>
   <div class="win-title" id="winTitle">NICE!</div>
-  <div class="win-new-best" id="winNewBest">🏆 NEW BEST!</div>
+  <div class="win-new-best" id="winNewBest">[*] NEW BEST!</div>
   <div class="win-level" id="winLevelLabel">Level 1 Complete</div>
   <div class="win-time">Time: <span id="winTime">0:00</span></div>
   <div class="win-score">
@@ -582,15 +600,15 @@
     <div class="num" id="winBestNum">1</div>
   </div>
   <div class="win-btns">
-    <button class="next-btn" id="nextBtn">Next Level →</button>
-    <button class="win-menu-btn" id="winMenuBtn">⌂ Menu</button>
+    <button class="next-btn" id="nextBtn">Next Level -></button>
+    <button class="win-menu-btn" id="winMenuBtn">[Home] Menu</button>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════
-// SOUND ENGINE (Web Audio API — no external files)
-// ═══════════════════════════════════════════════
+// ================================================
+// SOUND ENGINE (Web Audio API - no external files)
+// ================================================
 let audioCtx = null;
 let soundEnabled = true;
 
@@ -729,25 +747,30 @@ function playMenuTap() {
 // Sound toggle button
 const $soundToggle = document.getElementById('sound-toggle');
 $soundToggle.addEventListener('click', () => {
+  // Unlock AudioContext on first user gesture (iOS requires this)
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+  } catch(e) {}
   soundEnabled = !soundEnabled;
-  $soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+  $soundToggle.textContent = soundEnabled ? 'SND ON' : 'SND OFF';
   $soundToggle.classList.toggle('muted', !soundEnabled);
   if (!soundEnabled) stopRollHum();
-  playMenuTap();
+  else playMenuTap();
 });
 
-// ═══════════════════════════════════════════════
+// ================================================
 // WIN PHRASES
-// ═══════════════════════════════════════════════
+// ================================================
 const WIN_PHRASES = [
   'NICE!', 'NAILED IT!', 'BRAVO!', 'LEGENDARY!',
   'GET IN!', 'FLAWLESS!', 'CRISPY!', 'LET\'S GO!',
   'STUNNING!', 'GOATED!',
 ];
 
-// ═══════════════════════════════════════════════
+// ================================================
 // SCREEN TRANSITION HELPER
-// ═══════════════════════════════════════════════
+// ================================================
 function showScreen(el) {
   // Find all currently visible screens and fade them out
   document.querySelectorAll('.screen:not(.hidden)').forEach(s => {
@@ -774,9 +797,9 @@ function goToMenu() {
   showScreen($start);
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // LEVEL TITLE CARD
-// ═══════════════════════════════════════════════
+// ================================================
 const $ltCard = document.getElementById('level-title-card');
 const $ltcNum = document.getElementById('ltcNum');
 const $ltcName = document.getElementById('ltcName');
@@ -790,9 +813,9 @@ function showLevelTitleCard(levelIndex, lvl) {
   setTimeout(() => $ltCard.classList.remove('show'), 1600);
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // SAVE / LOAD
-// ═══════════════════════════════════════════════
+// ================================================
 const SAVE_KEY = 'tiltmaze_save_v1';
 
 function loadSave() {
@@ -800,7 +823,7 @@ function loadSave() {
     const raw = localStorage.getItem(SAVE_KEY);
     if (raw) return JSON.parse(raw);
   } catch(e) {}
-  return { bestLevel: 0, sensitivity: 5, offsetX: 0, offsetY: 0, unlockedBorder: false };
+  return { bestLevel: 0, sensitivity: 5, offsetX: 0, offsetY: 0 };
 }
 
 function writeSave(data) {
@@ -809,9 +832,9 @@ function writeSave(data) {
 
 let saveData = loadSave();
 
-// ═══════════════════════════════════════════════
+// ================================================
 // CALIBRATION STATE
-// ═══════════════════════════════════════════════
+// ================================================
 let sensitivity = saveData.sensitivity ?? 5;
 let tiltOffsetX = saveData.offsetX    ?? 0;
 let tiltOffsetY = saveData.offsetY    ?? 0;
@@ -821,18 +844,18 @@ let isCalibMode = false;
 let rawAccelX = 0, rawAccelY = 0;
 
 function sensitivityToScale(s) {
-  // maps 1-13 → 0.06 - 1.10 (~30% higher max than before)
+  // maps 1-13 -> 0.06 - 1.10 (~30% higher max than before)
   return 0.06 + (s - 1) / 12 * 1.04;
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // LEVEL DATA
 // 0=open  1=wall  2=ice  3=mud  4=teleport  5=bouncy  6=moving-wall
 // teleporters: pairs defined in level.teleporters [[col,row],[col,row]]
-// warpPair: maps "col,row" → pair index for color-coded rendering
+// warpPair: maps "col,row" -> pair index for color-coded rendering
 // movers: defined in level.movers [{col,row,axis,min,max,speed}]
 // hasBorder: false means out-of-bounds = reset to start
-// ═══════════════════════════════════════════════
+// ================================================
 const CALIB_LEVEL = {
   name: 'Calibration',
   cols: 9, rows: 13,
@@ -857,7 +880,7 @@ const CALIB_LEVEL = {
 };
 
 const LEVELS = [
-  // ── L1: Wake Up (has border) ───────────────────────────────────
+  // -- L1: Wake Up (has border) ----------------------------------------
   {
     name: 'Wake Up',
     cols: 9, rows: 13,
@@ -881,7 +904,7 @@ const LEVELS = [
     ]
   },
 
-  // ── L2: Ice Rink ────────────────────────────────────────────
+  // -- L2: Ice Rink --------------------------------------------------
   {
     name: 'Ice Rink',
     cols: 9, rows: 11,
@@ -903,7 +926,7 @@ const LEVELS = [
     ]
   },
 
-  // ── L3: Mud Pits ────────────────────────────────────────────
+  // -- L3: Mud Pits --------------------------------------------------
   {
     name: 'Mud Pits',
     cols: 9, rows: 13,
@@ -927,7 +950,7 @@ const LEVELS = [
     ]
   },
 
-  // ── L4: Warp Zone ───────────────────────────────────────────
+  // -- L4: Warp Zone -------------------------------------------------
   {
     name: 'Warp Zone',
     cols: 9, rows: 13,
@@ -956,7 +979,7 @@ const LEVELS = [
     ]
   },
 
-  // ── L5: Bouncy Castle ───────────────────────────────────────
+  // -- L5: Bouncy Castle ---------------------------------------------
   {
     name: 'Bouncy Castle',
     cols: 9, rows: 13,
@@ -980,7 +1003,7 @@ const LEVELS = [
     ]
   },
 
-  // ── L6: Moving Walls ────────────────────────────────────────
+  // -- L6: Moving Walls ----------------------------------------------
   {
     name: 'Moving Walls',
     cols: 9, rows: 13,
@@ -1009,7 +1032,7 @@ const LEVELS = [
     ]
   },
 
-  // ── L7: Slippery Pipes ──────────────────────────────────────
+  // -- L7: Slippery Pipes --------------------------------------------
   {
     name: 'Slippery Pipes',
     cols: 11, rows: 15,
@@ -1035,7 +1058,7 @@ const LEVELS = [
     ]
   },
 
-  // ── L8: Total Chaos ─────────────────────────────────────────
+  // -- L8: Total Chaos -----------------------------------------------
   {
     name: 'Total Chaos',
     cols: 11, rows: 15,
@@ -1070,7 +1093,7 @@ const LEVELS = [
     ]
   },
 
-  // ── L9: The Gauntlet ────────────────────────────────────────
+  // -- L9: The Gauntlet ----------------------------------------------
   {
     name: 'The Gauntlet',
     cols: 11, rows: 17,
@@ -1113,9 +1136,9 @@ function getActiveLevel() {
   return isCalibMode ? CALIB_LEVEL : LEVELS[currentLevel % LEVELS.length];
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // PHYSICS CONSTANTS
-// ═══════════════════════════════════════════════
+// ================================================
 const FRICTION        = 0.82;
 const FRICTION_ICE    = 0.975;  // barely slows down
 const FRICTION_MUD    = 0.60;   // gloopy
@@ -1123,9 +1146,9 @@ const MAX_SPEED       = 8;
 const BOUNCE_REST     = 1.6;    // bouncy wall restitution multiplier
 const TELEPORT_COOLDOWN = 60;   // frames before can re-teleport
 
-// ═══════════════════════════════════════════════
+// ================================================
 // GAME STATE
-// ═══════════════════════════════════════════════
+// ================================================
 let currentLevel   = 0;
 let gameRunning    = false;
 let tiltX = 0, tiltY = 0;
@@ -1140,9 +1163,9 @@ let ballOnIce      = false;
 let ballOnMud      = false;
 let resetCooldown   = 0;   // frames after reset before tilt applies
 
-// ═══════════════════════════════════════════════
+// ================================================
 // DOM REFS
-// ═══════════════════════════════════════════════
+// ================================================
 const canvas      = document.getElementById('gameCanvas');
 const ctx         = canvas.getContext('2d');
 const $start      = document.getElementById('screen-start');
@@ -1153,7 +1176,7 @@ const $hudBest    = document.getElementById('hudBest');
 const $hudTime    = document.getElementById('hudTime');
 const $winLbl     = document.getElementById('winLevelLabel');
 const $winBest    = document.getElementById('winBestNum');
-const $winTimeEl  = document.getElementById('winTime');
+const $winTime    = document.getElementById('winTime');
 const $saveInf    = document.getElementById('saveInfo');
 const $calibOv    = document.getElementById('calib-overlay');
 const $sensSlider = document.getElementById('sensSlider');
@@ -1173,9 +1196,9 @@ if (saveData.bestLevel > 0) {
   document.getElementById('continueBtn').classList.remove('hidden');
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // TILT INPUT
-// ═══════════════════════════════════════════════
+// ================================================
 function handleMotion(e) {
   const a = e.accelerationIncludingGravity || e.acceleration;
   if (!a) return;
@@ -1191,21 +1214,31 @@ function handleMotion(e) {
   tiltY = ay * scale;
 }
 
+let motionListenerAdded = false;
+
 function requestTiltPermission() {
   if (typeof DeviceMotionEvent !== 'undefined' &&
       typeof DeviceMotionEvent.requestPermission === 'function') {
+    // iOS 13+ - permission must be requested; listener added on each grant is fine
+    // because iOS only fires the callback once per session
     DeviceMotionEvent.requestPermission()
       .then(state => {
-        if (state === 'granted') window.addEventListener('devicemotion', handleMotion);
+        if (state === 'granted' && !motionListenerAdded) {
+          window.addEventListener('devicemotion', handleMotion);
+          motionListenerAdded = true;
+        }
       }).catch(() => {});
   } else {
-    window.addEventListener('devicemotion', handleMotion);
+    if (!motionListenerAdded) {
+      window.addEventListener('devicemotion', handleMotion);
+      motionListenerAdded = true;
+    }
   }
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // KEYBOARD FALLBACK
-// ═══════════════════════════════════════════════
+// ================================================
 const keys = {};
 window.addEventListener('keydown', e => { keys[e.key] = true; });
 window.addEventListener('keyup',   e => { keys[e.key] = false; });
@@ -1218,9 +1251,9 @@ function applyKeyboardTilt() {
   if (keys['ArrowDown'])  tiltY += KS;
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // CALIBRATION CONTROLS
-// ═══════════════════════════════════════════════
+// ================================================
 $sensSlider.addEventListener('input', () => {
   sensitivity = parseInt($sensSlider.value);
   $sensVal.textContent = sensitivity;
@@ -1239,7 +1272,7 @@ $zeroBtn.addEventListener('click', () => {
   ball.vx = 0; ball.vy = 0;
   tiltX = 0;   tiltY = 0;
 
-  $zeroStatus.textContent = '✓ Zeroed!';
+  $zeroStatus.textContent = 'Zeroed!';
   $zeroStatus.style.opacity = '1';
   setTimeout(() => { $zeroStatus.style.opacity = '0'; }, 2000);
 });
@@ -1255,9 +1288,9 @@ $lockBtn.addEventListener('click', () => {
   goToMenu();
 });
 
-// ═══════════════════════════════════════════════
+// ================================================
 // LEVEL SETUP
-// ═══════════════════════════════════════════════
+// ================================================
 function setupLevel(lvl, calibMode) {
   isCalibMode = !!calibMode;
   const wrap = document.getElementById('canvas-wrap');
@@ -1276,7 +1309,7 @@ function setupLevel(lvl, calibMode) {
   ballOnMud = false;
   resetCooldown = 0;
 
-  // Init mover states — each mover gets a phase (0..1)
+  // Init mover states - each mover gets a phase (0..1)
   moverStates = (lvl.movers || []).map((m, i) => ({
     ...m,
     phase: i * 0.33, // stagger so they don't all sync up
@@ -1294,17 +1327,17 @@ function setupLevel(lvl, calibMode) {
     const hasWarp   = lvl.grid.some(r => r.includes(4));
     const hasBouncy = lvl.grid.some(r => r.includes(5));
     const hasMover  = (lvl.movers || []).length > 0;
-    if (hasIce)    legendEl.innerHTML += '<span class="legend-pill legend-ice">❄ Ice</span>';
-    if (hasMud)    legendEl.innerHTML += '<span class="legend-pill legend-mud">🟤 Mud</span>';
-    if (hasWarp)   legendEl.innerHTML += '<span class="legend-pill legend-warp">⚡ Warp: ● ●</span>';
-    if (hasBouncy) legendEl.innerHTML += '<span class="legend-pill legend-bouncy">💥 Bouncy</span>';
-    if (hasMover)  legendEl.innerHTML += '<span class="legend-pill legend-mover">🔄 Moving</span>';
+    if (hasIce)    legendEl.innerHTML += '<span class="legend-pill legend-ice">[~] Ice</span>';
+    if (hasMud)    legendEl.innerHTML += '<span class="legend-pill legend-mud">[#] Mud</span>';
+    if (hasWarp)   legendEl.innerHTML += '<span class="legend-pill legend-warp-a">Warp A</span><span class="legend-pill legend-warp-b">Warp B</span>';
+    if (hasBouncy) legendEl.innerHTML += '<span class="legend-pill legend-bouncy">[!] Bouncy</span>';
+    if (hasMover)  legendEl.innerHTML += '<span class="legend-pill legend-mover">[>] Moving</span>';
   }
 
   if (calibMode) {
-    $hudLvl.textContent  = '—';
-    $hudBest.textContent = '—';
-    $hudTime.textContent = '—';
+    $hudLvl.textContent  = '-';
+    $hudBest.textContent = '-';
+    $hudTime.textContent = '-';
     clearInterval(timerInterval);
     $sensSlider.value    = sensitivity;
     $sensVal.textContent = sensitivity;
@@ -1313,7 +1346,7 @@ function setupLevel(lvl, calibMode) {
     $calibOv.classList.remove('hidden');
   } else {
     $hudLvl.textContent  = currentLevel + 1;
-    $hudBest.textContent = saveData.bestLevel > 0 ? saveData.bestLevel : '—';
+    $hudBest.textContent = saveData.bestLevel > 0 ? saveData.bestLevel : '-';
     levelStartTime = Date.now();
     clearInterval(timerInterval);
     timerInterval = setInterval(updateTimer, 500);
@@ -1328,9 +1361,9 @@ function updateTimer() {
   $hudTime.textContent = `${m}:${s.toString().padStart(2,'0')}`;
 }
 
-// ═══════════════════════════════════════════════
-// MOVER UPDATE — must run before collision
-// ═══════════════════════════════════════════════
+// ================================================
+// MOVER UPDATE - must run before collision
+// ================================================
 function updateMovers() {
   const cs = cellSize;
   for (const m of moverStates) {
@@ -1346,9 +1379,9 @@ function updateMovers() {
   }
 }
 
-// ═══════════════════════════════════════════════
-// COLLISION — handles wall, bouncy, mover blocks
-// ═══════════════════════════════════════════════
+// ================================================
+// COLLISION - handles wall, bouncy, mover blocks
+// ================================================
 function collideBall() {
   const lvl = getActiveLevel();
   const r   = ball.r;
@@ -1357,7 +1390,7 @@ function collideBall() {
   ballOnIce = false;
   ballOnMud = false;
 
-  // ── Out-of-bounds: reset to start (no border levels) ───────
+  // -- Out-of-bounds: reset to start (no border levels) ------
   // Only triggers when more than half the ball is past the edge
   if (!lvl.hasBorder) {
     const halfPastLeft  = ball.x - ball.r / 2 < 0;
@@ -1379,7 +1412,7 @@ function collideBall() {
   ball.x = Math.max(r, Math.min(lvl.cols * cs - r, ball.x));
   ball.y = Math.max(r, Math.min(lvl.rows * cs - r, ball.y));
 
-  // ── Teleport check ───────────────────────────
+  // -- Teleport check ---------------------------------
   if (teleportCooldown > 0) teleportCooldown--;
   if (teleportCooldown === 0 && (lvl.teleporters || []).length) {
     const ballCol = Math.floor(ball.x / cs);
@@ -1405,7 +1438,7 @@ function collideBall() {
     }
   }
 
-  // ── Floor type detection for current cell ────
+  // -- Floor type detection for current cell ----------
   const bcol = Math.floor(ball.x / cs);
   const brow = Math.floor(ball.y / cs);
   if (brow >= 0 && brow < lvl.rows && bcol >= 0 && bcol < lvl.cols) {
@@ -1414,7 +1447,7 @@ function collideBall() {
     if (cell === 3) ballOnMud = true;
   }
 
-  // ── Static wall collision (3 passes) ─────────
+  // -- Static wall collision (3 passes) ---------------
   for (let pass = 0; pass < 3; pass++) {
     const colMin = Math.max(0, Math.floor((ball.x - r) / cs));
     const colMax = Math.min(lvl.cols - 1, Math.floor((ball.x + r) / cs));
@@ -1467,7 +1500,7 @@ function collideBall() {
       }
     }
 
-    // ── Moving wall collision ──────────────────
+    // -- Moving wall collision --------------------------
     for (const m of moverStates) {
       const wL = m.cx - cs / 2, wR = m.cx + cs / 2;
       const wT = m.cy - cs / 2, wB = m.cy + cs / 2;
@@ -1493,9 +1526,9 @@ function collideBall() {
   }
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // WIN CHECK
-// ═══════════════════════════════════════════════
+// ================================================
 function checkWin() {
   if (isCalibMode) return false;
   const lvl = getActiveLevel();
@@ -1504,9 +1537,9 @@ function checkWin() {
   return Math.hypot(ball.x - gx, ball.y - gy) < cellSize * 0.45;
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // RENDER
-// ═══════════════════════════════════════════════
+// ================================================
 let goalPulse    = 0;
 let ballRotation = 0;
 
@@ -1521,10 +1554,10 @@ function drawFrame() {
   goalPulse = (goalPulse + 0.06) % (Math.PI * 2);
   const glow = 0.55 + 0.45 * Math.sin(goalPulse);
 
-  // ── Teleport pulse animation ─────────────────
+  // -- Teleport pulse animation -----------------------
   const tpPulse = (goalPulse * 1.7) % (Math.PI * 2);
 
-  // ── Cells ────────────────────────────────────
+  // -- Cells ------------------------------------------
   for (let row = 0; row < lvl.rows; row++) {
     for (let col = 0; col < lvl.cols; col++) {
       const x = col * cs, y = row * cs;
@@ -1539,7 +1572,7 @@ function drawFrame() {
         ctx.fillRect(x+1, y+1, 3, cs-2);
 
       } else if (cell === 2) {
-        // Ice — pale blue sheen
+        // Ice - pale blue sheen
         ctx.fillStyle = '#0e1820'; ctx.fillRect(x, y, cs, cs);
         ctx.fillStyle = 'rgba(168,216,240,0.12)'; ctx.fillRect(x, y, cs, cs);
         // Sparkle lines
@@ -1552,7 +1585,7 @@ function drawFrame() {
         ctx.fillStyle = 'rgba(168,216,240,0.06)'; ctx.fillRect(x, y, cs, 2);
 
       } else if (cell === 3) {
-        // Mud — brown lumpy texture
+        // Mud - brown lumpy texture
         ctx.fillStyle = '#1a1208'; ctx.fillRect(x, y, cs, cs);
         ctx.fillStyle = '#3a2810'; ctx.fillRect(x+2, y+2, cs-4, cs-4);
         // Bubbles
@@ -1564,7 +1597,7 @@ function drawFrame() {
         ctx.fillStyle = 'rgba(90,60,20,0.4)'; ctx.fillRect(x, y+cs-3, cs, 3);
 
       } else if (cell === 4) {
-        // Teleport portal — color-coded by pair
+        // Teleport portal - color-coded by pair
         const key = `${col},${row}`;
         const pairIdx = lvl.warpColors ? (lvl.warpColors[key] ?? -1) : -1;
         // Pair 0 = cyan, Pair 1 = magenta, default = purple
@@ -1597,7 +1630,7 @@ function drawFrame() {
         ctx.fillStyle = `rgb(${pairIdx===0?'100,240,255':pairIdx===1?'255,140,200':'224,144,255'})`; ctx.fill();
 
       } else if (cell === 5) {
-        // Bouncy — red/orange ribbed wall
+        // Bouncy - red/orange ribbed wall
         ctx.fillStyle = '#200810'; ctx.fillRect(x, y, cs, cs);
         ctx.fillStyle = '#400818'; ctx.fillRect(x+1, y+1, cs-2, cs-2);
         // Ribs
@@ -1618,8 +1651,9 @@ function drawFrame() {
     }
   }
 
-  // ── Moving walls ─────────────────────────────
+  // -- Moving walls -----------------------------------
   for (const m of moverStates) {
+    ctx.save();
     const x = m.cx - cs/2, y = m.cy - cs/2;
     ctx.fillStyle = '#2a1500'; ctx.fillRect(x, y, cs, cs);
     ctx.fillStyle = '#5a2a00'; ctx.fillRect(x+1, y+1, cs-2, cs-2);
@@ -1635,10 +1669,11 @@ function drawFrame() {
     ctx.fillStyle = 'rgba(255,180,80,0.7)';
     ctx.font = `${Math.floor(cs*0.4)}px monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(m.axis === 'x' ? '↔' : '↕', m.cx, m.cy);
+    ctx.fillText(m.axis === 'x' ? '<->' : '^|v', m.cx, m.cy);
+    ctx.restore();
   }
 
-  // ── Calibration rings ────────────────────────
+  // -- Calibration rings ------------------------------
   if (isCalibMode) {
     const cx = canvas.width / 2, cy = canvas.height / 2;
     for (let ring = 1; ring <= 3; ring++) {
@@ -1649,7 +1684,7 @@ function drawFrame() {
     }
   }
 
-  // ── Goal ─────────────────────────────────────
+  // -- Goal -------------------------------------------
   const gx = lvl.goal[0] * cs + cs/2;
   const gy = lvl.goal[1] * cs + cs/2;
   const gr = cs * 0.36;
@@ -1672,13 +1707,13 @@ function drawFrame() {
     : `rgba(64,224,160,${0.7 + 0.3*glow})`;
   ctx.fill(); ctx.restore();
 
-  // ── Start marker ─────────────────────────────
+  // -- Start marker -----------------------------------
   const sx = lvl.start[0] * cs + cs/2;
   const sy = lvl.start[1] * cs + cs/2;
   ctx.beginPath(); ctx.arc(sx, sy, cs*0.2, 0, Math.PI*2);
   ctx.fillStyle = 'rgba(120,120,160,0.25)'; ctx.fill();
 
-  // ── Teleport flash overlay ────────────────────
+  // -- Teleport flash overlay -------------------------
   if (teleportFlash > 0) {
     const alpha = (teleportFlash / 18) * 0.5;
     ctx.fillStyle = `rgba(192,64,240,${alpha})`;
@@ -1686,13 +1721,13 @@ function drawFrame() {
     teleportFlash--;
   }
 
-  // ── Ball shadow ───────────────────────────────
+  // -- Ball shadow ------------------------------------
   ballRotation += (Math.abs(ball.vx) + Math.abs(ball.vy)) * 0.04;
   const br = ball.r;
   ctx.beginPath(); ctx.ellipse(ball.x + 2, ball.y + 4, br*0.9, br*0.5, 0, 0, Math.PI*2);
   ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fill();
 
-  // ── Ball body (tinted by surface) ────────────
+  // -- Ball body (tinted by surface) ------------------
   const ballTint = teleportFlash > 0 ? '#e090ff'
     : ballOnIce ? '#c8eeff'
     : ballOnMud ? '#c8a070'
@@ -1712,17 +1747,17 @@ function drawFrame() {
   ctx.beginPath(); ctx.arc(ball.x, ball.y, br, 0, Math.PI*2);
   ctx.fillStyle = grad; ctx.fill();
 
-  // ── Spin stripe ───────────────────────────────
+  // -- Spin stripe ------------------------------------
   ctx.save(); ctx.translate(ball.x, ball.y); ctx.rotate(ballRotation);
   ctx.beginPath(); ctx.arc(0, 0, br, -0.4, 0.4);
   ctx.strokeStyle = 'rgba(255,255,200,0.4)'; ctx.lineWidth = br * 0.35; ctx.stroke();
   ctx.restore();
 
-  // ── Specular ──────────────────────────────────
+  // -- Specular ---------------------------------------
   ctx.beginPath(); ctx.arc(ball.x - br*0.32, ball.y - br*0.32, br*0.22, 0, Math.PI*2);
   ctx.fillStyle = 'rgba(255,255,240,0.75)'; ctx.fill();
 
-  // ── Surface effect indicators ─────────────────
+  // -- Surface effect indicators ----------------------
   if (ballOnIce) {
     // Draw little speed-lines behind ball
     const speed = Math.hypot(ball.vx, ball.vy);
@@ -1747,11 +1782,13 @@ function drawFrame() {
   }
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // GAME LOOP
-// ═══════════════════════════════════════════════
+// ================================================
+let gameLoopRunning = false;
+
 function gameLoop() {
-  if (!gameRunning) return;
+  if (!gameRunning) { gameLoopRunning = false; return; }
   requestAnimationFrame(gameLoop);
 
   applyKeyboardTilt();
@@ -1797,9 +1834,9 @@ function gameLoop() {
   if (!keys['ArrowUp']   && !keys['ArrowDown'])  tiltY *= 0.85;
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // WIN SCREEN
-// ═══════════════════════════════════════════════
+// ================================================
 function showWinScreen() {
   const done = currentLevel + 1;
   const isNewBest = done > saveData.bestLevel;
@@ -1810,7 +1847,7 @@ function showWinScreen() {
     document.getElementById('continueBtn').classList.remove('hidden');
   }
   const lvl = LEVELS[(currentLevel) % LEVELS.length];
-  $winLbl.textContent  = `Level ${done} — "${lvl.name}" Complete!`;
+  $winLbl.textContent  = `Level ${done} - "${lvl.name}" Complete!`;
   $winBest.textContent = saveData.bestLevel;
 
   // Random win phrase
@@ -1825,7 +1862,7 @@ function showWinScreen() {
   const elapsed = Math.floor((Date.now() - levelStartTime) / 1000);
   const m = Math.floor(elapsed / 60);
   const s = elapsed % 60;
-  document.getElementById('winTime').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  $winTime.textContent = `${m}:${s.toString().padStart(2,'0')}`;
 
   stopRollHum();
   playWin();
@@ -1907,10 +1944,14 @@ function animateConfetti() {
   else confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
 }
 
-// ═══════════════════════════════════════════════
+// ================================================
 // NAVIGATION HELPERS
-// ═══════════════════════════════════════════════
+// ================================================
 function launchGame(calibMode) {
+  // Lock to portrait (must be called from a user gesture; silently fails on iOS Safari)
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('portrait').catch(() => {});
+  }
   requestTiltPermission();
   confRunning = false;
 
@@ -1921,7 +1962,10 @@ function launchGame(calibMode) {
     setupLevel(lvl, calibMode);
     gameRunning = true;
     startRollHum();
-    requestAnimationFrame(gameLoop);
+    if (!gameLoopRunning) {
+      gameLoopRunning = true;
+      requestAnimationFrame(gameLoop);
+    }
     if (!calibMode) {
       showLevelTitleCard(currentLevel, lvl);
     }
@@ -1941,7 +1985,7 @@ document.getElementById('continueBtn').addEventListener('click', () => {
   launchGame(false);
 });
 
-// ── Download Save ──────────────────────────────
+// -- Download Save ----------------------------------
 document.getElementById('downloadSaveBtn').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
@@ -1954,7 +1998,7 @@ document.getElementById('downloadSaveBtn').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-// ── Import Save ────────────────────────────────
+// -- Import Save ------------------------------------
 document.getElementById('importSaveBtn').addEventListener('click', () => {
   document.getElementById('importFileInput').click();
 });
@@ -1968,13 +2012,12 @@ document.getElementById('importFileInput').addEventListener('change', (e) => {
       const parsed = JSON.parse(ev.target.result);
       // Validate it looks like a tiltmaze save
       if (typeof parsed.bestLevel !== 'number') throw new Error('Invalid save file');
-      // Merge in — preserve any new keys with defaults
+      // Merge in - preserve any new keys with defaults
       saveData = {
         bestLevel: parsed.bestLevel ?? 0,
         sensitivity: parsed.sensitivity ?? 5,
         offsetX: parsed.offsetX ?? 0,
         offsetY: parsed.offsetY ?? 0,
-        unlockedBorder: parsed.unlockedBorder ?? false,
       };
       writeSave(saveData);
       // Restore calibration state
@@ -1988,16 +2031,16 @@ document.getElementById('importFileInput').addEventListener('change', (e) => {
         $saveInf.textContent = `Best level: ${saveData.bestLevel}`;
         document.getElementById('continueBtn').classList.remove('hidden');
       } else {
-        $saveInf.textContent = 'Best level: —';
+        $saveInf.textContent = 'Best level: -';
         document.getElementById('continueBtn').classList.add('hidden');
       }
       const $flash = document.getElementById('importFlash');
-      $flash.textContent = `✓ Imported! Best level: ${saveData.bestLevel}`;
+      $flash.textContent = `OK! Imported! Best level: ${saveData.bestLevel}`;
       $flash.style.opacity = '1';
       setTimeout(() => { $flash.style.opacity = '0'; }, 3000);
     } catch (err) {
       const $flash = document.getElementById('importFlash');
-      $flash.textContent = '✗ Invalid save file';
+      $flash.textContent = 'Invalid save file';
       $flash.style.color = 'var(--bouncy)';
       $flash.style.opacity = '1';
       setTimeout(() => { $flash.style.opacity = '0'; $flash.style.color = 'var(--goal)'; }, 3000);
@@ -2031,9 +2074,9 @@ document.getElementById('nextBtn').addEventListener('click', () => {
 
 document.getElementById('winMenuBtn').addEventListener('click', goToMenu);
 
-// ═══════════════════════════════════════════════
+// ================================================
 // RESIZE
-// ═══════════════════════════════════════════════
+// ================================================
 window.addEventListener('resize', () => {
   if (!$game.classList.contains('hidden')) {
     const lvl = getActiveLevel();
@@ -2047,491 +2090,22 @@ window.addEventListener('resize', () => {
   }
 });
 
-// ── iOS AudioContext unlock on first touch ─────
-document.addEventListener('touchstart', () => {
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-}, { once: true });
+// -- iOS AudioContext unlock on first touch ---------
+// iOS suspends AudioContext until a user gesture. We force a resume on every
+// touchstart so it works regardless of which button the user taps first.
+function unlockAudio() {
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+  } catch(e) {}
+}
+document.addEventListener('touchstart', unlockAudio, { passive: true });
+document.addEventListener('touchend',   unlockAudio, { passive: true });
 
 document.addEventListener('touchmove', e => {
   if (e.target.type === 'range') return; // let slider scroll
   e.preventDefault();
 }, { passive: false });
-</script>
-
-<script>
-/**
- * Iframe 元素高亮注入脚本
- * 需要在目标网站中引入此脚本来支持跨域 iframe 高亮功能
- *
- * 使用方法：
- * 1. 将此脚本添加到目标网站的 HTML 中
- * 2. 或通过浏览器扩展、用户脚本等方式注入
- */
-
-(function () {
-  "use strict";
-
-  // 检查是否在 iframe 中
-  if (window.self === window.top) {
-    return; // 不在 iframe 中，不执行
-  }
-
-  // 检查是否已经初始化过
-  if (window.__iframeHighlightInitialized) {
-    return;
-  }
-  window.__iframeHighlightInitialized = true;
-  console.log("Iframe 高亮脚本已加载");
-
-  // 创建高亮覆盖层
-  var overlay = document.createElement("div");
-  overlay.id = "iframe-highlight-overlay";
-  overlay.style.cssText = "\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100vw;\n    height: 100vh;\n    pointer-events: none;\n    z-index: 999999;\n    overflow: hidden;\n  ";
-
-  // 创建悬停高亮框（虚线边框）
-  var highlightBox = document.createElement("div");
-  highlightBox.id = "iframe-highlight-box";
-  highlightBox.style.cssText = "\n    position: absolute;\n    border: 2px dashed #007AFF;\n    background: rgba(0, 122, 255, 0.08);\n    pointer-events: none;\n    display: none;\n    transition: all 0.1s ease;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);\n    border-radius: 2px;\n  ";
-
-  // 创建选中节点的常驻高亮框（实线边框）
-  var selectedBox = document.createElement("div");
-  selectedBox.id = "iframe-selected-box";
-  selectedBox.style.cssText = "\n    position: absolute;\n    border: 2px solid #007AFF;\n    pointer-events: none;\n    display: none;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 107, 53, 0.4);\n    border-radius: 2px;\n    z-index: 1000000;\n  ";
-
-  // 创建悬停标签显示
-  var tagLabel = document.createElement("div");
-  tagLabel.id = "iframe-tag-label";
-  tagLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 2px 6px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 2px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000001;\n    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n    font-weight: 500;\n  ";
-
-  // 创建选中节点标签
-  var selectedLabel = document.createElement("div");
-  selectedLabel.id = "iframe-selected-label";
-  selectedLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 3px 8px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 3px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000002;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);\n    font-weight: 600;\n  ";
-  overlay.appendChild(highlightBox);
-  overlay.appendChild(selectedBox);
-  overlay.appendChild(tagLabel);
-  overlay.appendChild(selectedLabel);
-  document.body.appendChild(overlay);
-
-  // 存储当前选中的元素
-  var selectedElement = null;
-  var highlightEnabled = false;
-
-  // 更新选中元素的高亮显示
-  function updateSelectedHighlight(element) {
-    console.log("updateSelectedHighlight called with:", element);
-    if (!element) {
-      selectedBox.style.display = "none";
-      selectedLabel.style.display = "none";
-      selectedElement = null;
-      console.log("Cleared selected highlight");
-      return;
-    }
-    selectedElement = element;
-    var rect = element.getBoundingClientRect();
-    console.log("Selected element rect:", rect);
-
-    // 更新选中高亮框位置
-    selectedBox.style.display = "block";
-    selectedBox.style.left = "".concat(rect.left - 2, "px");
-    selectedBox.style.top = "".concat(rect.top - 2, "px");
-    selectedBox.style.width = "".concat(rect.width + 4, "px");
-    selectedBox.style.height = "".concat(rect.height + 4, "px");
-
-    // 更新选中标签位置和内容
-    selectedLabel.style.display = "block";
-    selectedLabel.textContent = "\u2713 <".concat(element.tagName.toLowerCase(), ">");
-
-    // 计算标签位置，确保不超出视窗
-    var labelTop = rect.top - 28;
-    var labelLeft = rect.left;
-
-    // 如果标签会超出顶部，显示在元素下方
-    if (labelTop < 5) {
-      labelTop = rect.bottom + 5;
-    }
-
-    // 如果标签会超出右侧，向左调整
-    var labelWidth = selectedLabel.offsetWidth || 100; // 预估宽度
-    if (labelLeft + labelWidth > window.innerWidth - 10) {
-      labelLeft = window.innerWidth - labelWidth - 10;
-    }
-    selectedLabel.style.left = "".concat(Math.max(5, labelLeft), "px");
-    selectedLabel.style.top = "".concat(labelTop, "px");
-    console.log("Selected highlight positioned at:", {
-      left: selectedBox.style.left,
-      top: selectedBox.style.top,
-      width: selectedBox.style.width,
-      height: selectedBox.style.height
-    });
-  }
-  function getElementSelector(element) {
-    if (!(element instanceof Element)) throw new Error('Argument must be a DOM element');
-    var segments = [];
-    var current = element;
-    while (current !== document.documentElement) {
-      var selector = '';
-      // 优先检查唯一ID
-      if (current.id && document.querySelectorAll("#".concat(current.id)).length === 1) {
-        segments.unshift("#".concat(current.id));
-        break; // ID唯一，无需继续向上
-      }
-
-      // 生成类名选择器（取第一个有效类名）
-      var classes = Array.from(current.classList).filter(function (c) {
-        return !c.startsWith('js-');
-      });
-      var className = classes.length > 0 ? ".".concat(classes[0]) : '';
-
-      // 生成位置索引（nth-child）
-      var tag = current.tagName.toLowerCase();
-      if (!className) {
-        var siblings = Array.from(current.parentNode.children);
-        var index = siblings.findIndex(function (el) {
-          return el === current;
-        }) + 1;
-        selector = "".concat(tag, ":nth-child(").concat(index, ")");
-      } else {
-        selector = className;
-      }
-      segments.unshift(selector);
-      current = current.parentElement;
-    }
-
-    // 处理根元素
-    if (current === document.documentElement) {
-      segments.unshift('html');
-    }
-    return segments.join(' > ');
-  }
-
-  // 获取元素文本内容
-  function getElementText(element) {
-    var _element$textContent;
-    if (element.tagName === "INPUT") {
-      return element.value || element.placeholder || "";
-    }
-    if (element.tagName === "TEXTAREA") {
-      return element.value || element.placeholder || "";
-    }
-    var text = ((_element$textContent = element.textContent) === null || _element$textContent === void 0 ? void 0 : _element$textContent.trim()) || "";
-    return text.length > 50 ? text.substring(0, 50) + "..." : text;
-  }
-
-  // 获取元素属性信息
-  function getElementAttributes(element) {
-    var attrs = {};
-    for (var i = 0; i < element.attributes.length; i++) {
-      var attr = element.attributes[i];
-      attrs[attr.name] = attr.value;
-    }
-    return attrs;
-  }
-
-  // 鼠标悬停事件处理
-  function handleMouseOver(e) {
-    if (!highlightEnabled) return;
-    var target = e.target;
-    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
-      return;
-    }
-
-    // 避免高亮 html 和 body 元素
-    if (target === document.documentElement || target === document.body) {
-      return;
-    }
-
-    // 如果是已选中的元素，不显示悬停高亮
-    if (target === selectedElement) {
-      highlightBox.style.display = "none";
-      tagLabel.style.display = "none";
-      return;
-    }
-    var rect = target.getBoundingClientRect();
-    var selector = getElementSelector(target);
-    var text = getElementText(target);
-    var attributes = getElementAttributes(target);
-
-    // 更新悬停高亮框位置
-    highlightBox.style.display = "block";
-    highlightBox.style.left = "".concat(rect.left - 2, "px");
-    highlightBox.style.top = "".concat(rect.top - 2, "px");
-    highlightBox.style.width = "".concat(rect.width + 4, "px");
-    highlightBox.style.height = "".concat(rect.height + 4, "px");
-
-    // 更新标签位置和内容
-    tagLabel.style.display = "block";
-    tagLabel.textContent = "<".concat(target.tagName.toLowerCase(), ">");
-
-    // 计算标签位置，确保不超出视窗
-    var labelTop = rect.top - 22;
-    var labelLeft = rect.left;
-
-    // 如果标签会超出顶部，显示在元素下方
-    if (labelTop < 0) {
-      labelTop = rect.bottom + 5;
-    }
-
-    // 如果标签会超出右侧，向左调整
-    if (labelLeft + tagLabel.offsetWidth > window.innerWidth) {
-      labelLeft = window.innerWidth - tagLabel.offsetWidth - 5;
-    }
-    tagLabel.style.left = "".concat(Math.max(0, labelLeft), "px");
-    tagLabel.style.top = "".concat(labelTop, "px");
-
-    // 发送消息到父窗口
-    var elementInfo = {
-      tagName: target.tagName.toLowerCase(),
-      rect: {
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height,
-        x: rect.x,
-        y: rect.y
-      },
-      selector: selector,
-      text: text,
-      attributes: attributes,
-      url: window.location.href,
-      path: window.location.pathname,
-      timestamp: Date.now()
-    };
-    try {
-      window.parent.postMessage({
-        type: "iframe-element-hover",
-        data: elementInfo,
-        source: "iframe-highlight-injector"
-      }, "*");
-    } catch (error) {
-      console.warn("无法发送消息到父窗口:", error);
-    }
-  }
-
-  // 鼠标离开事件处理
-  function handleMouseOut(e) {
-    if (!highlightEnabled) return;
-    var relatedTarget = e.relatedTarget;
-
-    // 如果鼠标移动到高亮相关元素上，不隐藏高亮
-    if (relatedTarget && (relatedTarget === highlightBox || relatedTarget === tagLabel || relatedTarget === overlay || relatedTarget === selectedBox || relatedTarget === selectedLabel)) {
-      return;
-    }
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    try {
-      window.parent.postMessage({
-        type: "iframe-element-hover",
-        data: null,
-        source: "iframe-highlight-injector"
-      }, "*");
-    } catch (error) {
-      console.warn("无法发送消息到父窗口:", error);
-    }
-  }
-
-  // 点击事件处理
-  function handleClick(e) {
-    var target = e.target;
-    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
-      return;
-    }
-
-    // 避免处理 html 和 body 元素
-    if (target === document.documentElement || target === document.body) {
-      return;
-    }
-
-    // 检查是否是交互元素，这些元素需要保留默认行为
-    var isInteractiveElement = ['input', 'textarea', 'select', 'button', 'a'].includes(target.tagName.toLowerCase());
-
-    // 如果高亮功能启用，对于非交互元素阻止默认行为和事件传播
-    if (highlightEnabled) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    var rect = target.getBoundingClientRect();
-    var selector = getElementSelector(target);
-    var text = getElementText(target);
-    var attributes = getElementAttributes(target);
-    console.log("Element clicked:", {
-      tagName: target.tagName,
-      selector: selector,
-      rect: rect
-    });
-
-    // 立即更新选中高亮
-    updateSelectedHighlight(target);
-
-    // 隐藏悬停高亮，因为现在是选中状态
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    var elementInfo = {
-      tagName: target.tagName.toLowerCase(),
-      rect: {
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-        width: rect.width,
-        height: rect.height,
-        x: rect.x,
-        y: rect.y
-      },
-      selector: selector,
-      text: text,
-      attributes: attributes,
-      url: window.location.href,
-      path: window.location.pathname,
-      timestamp: Date.now()
-    };
-    try {
-      window.parent.postMessage({
-        type: "iframe-element-click",
-        data: elementInfo,
-        source: "iframe-highlight-injector"
-      }, "*");
-    } catch (error) {
-      console.warn("无法发送消息到父窗口:", error);
-    }
-  }
-
-  // 监听来自父窗口的消息
-  function handleParentMessage(event) {
-    console.log("Received message from parent:", event.data);
-    if (event.data.type === "iframe-highlight-toggle") {
-      var enabled = event.data.enabled;
-      console.log("Highlight toggle:", enabled);
-      if (enabled) {
-        enableHighlight();
-      } else {
-        disableHighlight();
-      }
-    } else if (event.data.type === "enable-iframe-highlight") {
-      console.log("Enable iframe highlight");
-      enableHighlight();
-    } else if (event.data.type === "disable-iframe-highlight") {
-      console.log("Disable iframe highlight");
-      disableHighlight();
-    } else if (event.data.type === "toggle-iframe-highlight") {
-      var _enabled = event.data.enabled !== undefined ? event.data.enabled : !highlightEnabled;
-      console.log("Toggle iframe highlight to:", _enabled);
-      if (_enabled) {
-        enableHighlight();
-      } else {
-        disableHighlight();
-      }
-    } else if (event.data.type === "update-selected-element") {
-      var selector = event.data.selector;
-      console.log("Update selected element with selector:", selector);
-      if (selector) {
-        try {
-          var element = document.querySelector(selector);
-          console.log("Found element by selector:", element);
-          updateSelectedHighlight(element);
-        } catch (error) {
-          console.warn("Failed to select element:", error);
-          updateSelectedHighlight(null);
-        }
-      } else {
-        updateSelectedHighlight(null);
-      }
-    } else if (event.data.type === "clear-selected-element") {
-      console.log("Clear selected element");
-      updateSelectedHighlight(null);
-    }
-  }
-
-  // 启用高亮功能
-  function enableHighlight() {
-    console.log("Enabling highlight");
-    document.addEventListener("mouseover", handleMouseOver, true);
-    document.addEventListener("mouseout", handleMouseOut, true);
-    document.addEventListener("click", handleClick, true);
-    highlightEnabled = true;
-    overlay.style.display = "block";
-  }
-
-  // 禁用高亮功能
-  function disableHighlight() {
-    console.log("Disabling highlight");
-    highlightEnabled = false;
-    // 保持事件监听器，但通过 highlightEnabled 变量控制行为
-    // 这样可以保留选中状态的显示
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    // 不隐藏 selectedBox 和 selectedLabel，保留选中状态
-  }
-
-  // 完全禁用高亮功能（移除所有监听器）
-  function fullyDisableHighlight() {
-    console.log("Fully disabling highlight");
-    highlightEnabled = false;
-    document.removeEventListener("mouseover", handleMouseOver, true);
-    document.removeEventListener("mouseout", handleMouseOut, true);
-    document.removeEventListener("click", handleClick, true);
-    overlay.style.display = "none";
-    highlightBox.style.display = "none";
-    tagLabel.style.display = "none";
-    selectedBox.style.display = "none";
-    selectedLabel.style.display = "none";
-  }
-
-  // 添加事件监听
-  enableHighlight();
-  window.addEventListener("message", handleParentMessage);
-
-  // 暴露全局函数供外部调用
-  window.__iframeHighlightControl = {
-    enable: enableHighlight,
-    disable: disableHighlight,
-    fullyDisable: fullyDisableHighlight,
-    isEnabled: function isEnabled() {
-      return highlightEnabled;
-    },
-    getSelectedElement: function getSelectedElement() {
-      return selectedElement;
-    },
-    updateSelected: updateSelectedHighlight,
-    // 通过消息发送开关控制
-    sendToggleMessage: function sendToggleMessage(enabled) {
-      window.parent.postMessage({
-        type: 'iframe-highlight-status',
-        enabled: enabled || highlightEnabled,
-        source: 'iframe-highlight-injector'
-      }, '*');
-    }
-  };
-
-  // 通知父窗口脚本已加载
-  try {
-    window.parent.postMessage({
-      type: "iframe-highlight-ready",
-      data: {
-        url: window.location.href,
-        userAgent: navigator.userAgent,
-        timestamp: Date.now()
-      },
-      source: "iframe-highlight-injector"
-    }, "*");
-  } catch (error) {
-    console.warn("无法发送就绪消息到父窗口:", error);
-  }
-
-  // 清理函数
-  window.__iframeHighlightCleanup = function () {
-    fullyDisableHighlight();
-    window.removeEventListener("message", handleParentMessage);
-    if (overlay.parentElement) {
-      overlay.parentElement.removeChild(overlay);
-    }
-    delete window.__iframeHighlightInitialized;
-    delete window.__iframeHighlightCleanup;
-  };
-})();
-
 </script>
 </body>
 </html>
