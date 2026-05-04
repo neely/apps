@@ -128,6 +128,48 @@
     text-align: center; opacity: 0.7;
   }
 
+  .continue-btn {
+    background: transparent;
+    color: var(--goal);
+    border: 1px solid var(--goal);
+    border-radius: 10px;
+    padding: 14px 48px;
+    font-size: clamp(14px, 3.8vw, 16px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(64,224,160,0.15);
+    transition: transform 0.1s, box-shadow 0.1s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    width: 220px;
+  }
+  .continue-btn:active { transform: scale(0.96); background: rgba(64,224,160,0.08); }
+
+  .save-btns {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+  }
+
+  .io-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--wall-top);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: clamp(11px, 3vw, 12px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .io-btn:active { color: var(--text); border-color: var(--muted); }
+
+  .import-flash {
+    font-size: 11px; color: var(--goal);
+    text-align: center; height: 14px; margin-top: 2px;
+    transition: opacity 0.5s;
+  }
+
   /* ── GAME SCREEN ── */
   #screen-game {
     flex-direction: column; background: var(--bg);
@@ -327,11 +369,19 @@
   </div>
 
   <div class="menu-btns">
-    <button class="start-btn" id="startBtn">PLAY</button>
+    <button class="start-btn" id="startBtn">NEW GAME</button>
+    <button class="continue-btn hidden" id="continueBtn">▶ Continue</button>
     <button class="calib-btn" id="calibMenuBtn">⚙ Calibrate</button>
   </div>
 
   <div class="save-info" id="saveInfo">Best level: —</div>
+
+  <div class="save-btns">
+    <button class="io-btn" id="downloadSaveBtn">⬇ Download Save</button>
+    <button class="io-btn" id="importSaveBtn">📂 Import Save</button>
+  </div>
+  <input type="file" id="importFileInput" accept=".json" style="display:none">
+  <div class="import-flash" id="importFlash"></div>
 </div>
 
 <!-- ══════════ GAME SCREEN ══════════ -->
@@ -778,6 +828,7 @@ $sensVal.textContent = sensitivity;
 
 if (saveData.bestLevel > 0) {
   $saveInf.textContent = `Best level: ${saveData.bestLevel}`;
+  document.getElementById('continueBtn').classList.remove('hidden');
 }
 
 // ═══════════════════════════════════════════════
@@ -1410,6 +1461,9 @@ function showWinScreen() {
   if (done > saveData.bestLevel) {
     saveData.bestLevel = done;
     writeSave(saveData);
+    // Keep continue button visible and update start screen text
+    $saveInf.textContent = `Best level: ${saveData.bestLevel}`;
+    document.getElementById('continueBtn').classList.remove('hidden');
   }
   const lvl = LEVELS[(currentLevel) % LEVELS.length];
   $winLbl.textContent  = `Level ${done} — "${lvl.name}" Complete!`;
@@ -1484,6 +1538,79 @@ function launchGame(calibMode) {
 document.getElementById('startBtn').addEventListener('click', () => {
   currentLevel = 0;
   launchGame(false);
+});
+
+document.getElementById('continueBtn').addEventListener('click', () => {
+  // Resume from last beaten level (bestLevel is 1-indexed count of cleared levels)
+  currentLevel = Math.max(0, saveData.bestLevel - 1);
+  launchGame(false);
+});
+
+// ── Download Save ──────────────────────────────
+document.getElementById('downloadSaveBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'tiltmaze_save.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// ── Import Save ────────────────────────────────
+document.getElementById('importSaveBtn').addEventListener('click', () => {
+  document.getElementById('importFileInput').click();
+});
+
+document.getElementById('importFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      // Validate it looks like a tiltmaze save
+      if (typeof parsed.bestLevel !== 'number') throw new Error('Invalid save file');
+      // Merge in — preserve any new keys with defaults
+      saveData = {
+        bestLevel: parsed.bestLevel ?? 0,
+        sensitivity: parsed.sensitivity ?? 5,
+        offsetX: parsed.offsetX ?? 0,
+        offsetY: parsed.offsetY ?? 0,
+        unlockedBorder: parsed.unlockedBorder ?? false,
+      };
+      writeSave(saveData);
+      // Restore calibration state
+      sensitivity  = saveData.sensitivity;
+      tiltOffsetX  = saveData.offsetX;
+      tiltOffsetY  = saveData.offsetY;
+      $sensSlider.value    = sensitivity;
+      $sensVal.textContent = sensitivity;
+      // Refresh start screen UI
+      if (saveData.bestLevel > 0) {
+        $saveInf.textContent = `Best level: ${saveData.bestLevel}`;
+        document.getElementById('continueBtn').classList.remove('hidden');
+      } else {
+        $saveInf.textContent = 'Best level: —';
+        document.getElementById('continueBtn').classList.add('hidden');
+      }
+      const $flash = document.getElementById('importFlash');
+      $flash.textContent = `✓ Imported! Best level: ${saveData.bestLevel}`;
+      $flash.style.opacity = '1';
+      setTimeout(() => { $flash.style.opacity = '0'; }, 3000);
+    } catch (err) {
+      const $flash = document.getElementById('importFlash');
+      $flash.textContent = '✗ Invalid save file';
+      $flash.style.color = 'var(--bouncy)';
+      $flash.style.opacity = '1';
+      setTimeout(() => { $flash.style.opacity = '0'; $flash.style.color = 'var(--goal)'; }, 3000);
+    }
+    // Reset input so same file can be re-imported
+    e.target.value = '';
+  };
+  reader.readAsText(file);
 });
 
 document.getElementById('calibMenuBtn').addEventListener('click', () => {
