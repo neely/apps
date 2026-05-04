@@ -44,9 +44,8 @@
     inset: 0;
   }
 
-  /* Landscape fallback for touchscreen phones only: rotate UI back to portrait.
-     (pointer: coarse) excludes desktop mice so this never fires on a laptop/PC. */
-  @media screen and (orientation: landscape) and (pointer: coarse) {
+  /* Lock to portrait on all devices - rotate landscape back into portrait */
+  @media screen and (orientation: landscape) {
     body {
       transform: rotate(-90deg);
       transform-origin: left top;
