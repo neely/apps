@@ -40,9 +40,23 @@
     color: var(--text);
     touch-action: none;
     user-select: none;
-    /* Portrait lock: prevent rotation */
     position: fixed;
     inset: 0;
+  }
+
+  /* Landscape fallback for touchscreen phones only: rotate UI back to portrait.
+     (pointer: coarse) excludes desktop mice so this never fires on a laptop/PC. */
+  @media screen and (orientation: landscape) and (pointer: coarse) {
+    body {
+      transform: rotate(-90deg);
+      transform-origin: left top;
+      width: 100vh;
+      height: 100vw;
+      position: fixed;
+      top: 100%;
+      left: 0;
+      overflow: hidden;
+    }
   }
 
   .screen {
@@ -472,7 +486,7 @@
 <body>
 
 <!-- SOUND TOGGLE (global) -->
-<button id="sound-toggle" title="Toggle Sound">[SND]</button>
+<button id="sound-toggle" title="Toggle Sound">SND ON</button>
 
 <!-- LEVEL TITLE CARD -->
 <div id="level-title-card">
@@ -723,11 +737,16 @@ function playMenuTap() {
 // Sound toggle button
 const $soundToggle = document.getElementById('sound-toggle');
 $soundToggle.addEventListener('click', () => {
+  // Unlock AudioContext on first user gesture (iOS requires this)
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+  } catch(e) {}
   soundEnabled = !soundEnabled;
-  $soundToggle.textContent = soundEnabled ? '[ON]' : '[OFF]';
+  $soundToggle.textContent = soundEnabled ? 'SND ON' : 'SND OFF';
   $soundToggle.classList.toggle('muted', !soundEnabled);
   if (!soundEnabled) stopRollHum();
-  playMenuTap();
+  else playMenuTap();
 });
 
 // ================================================
@@ -1919,6 +1938,10 @@ function animateConfetti() {
 // NAVIGATION HELPERS
 // ================================================
 function launchGame(calibMode) {
+  // Lock to portrait (must be called from a user gesture; silently fails on iOS Safari)
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('portrait').catch(() => {});
+  }
   requestTiltPermission();
   confRunning = false;
 
@@ -2058,9 +2081,16 @@ window.addEventListener('resize', () => {
 });
 
 // -- iOS AudioContext unlock on first touch ---------
-document.addEventListener('touchstart', () => {
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-}, { once: true });
+// iOS suspends AudioContext until a user gesture. We force a resume on every
+// touchstart so it works regardless of which button the user taps first.
+function unlockAudio() {
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+  } catch(e) {}
+}
+document.addEventListener('touchstart', unlockAudio, { passive: true });
+document.addEventListener('touchend',   unlockAudio, { passive: true });
 
 document.addEventListener('touchmove', e => {
   if (e.target.type === 'range') return; // let slider scroll
