@@ -637,43 +637,81 @@ function updateTimer() {
 }
 
 // ═══════════════════════════════════════════════
-// COLLISION
+// COLLISION — proper circle-vs-AABB solver
 // ═══════════════════════════════════════════════
 function collideBall() {
   const lvl = getActiveLevel();
   const r   = ball.r;
+  const cs  = cellSize;
 
-  const pts = [
-    [ball.x - r, ball.y], [ball.x + r, ball.y],
-    [ball.x, ball.y - r], [ball.x, ball.y + r],
-    [ball.x - r*0.7, ball.y - r*0.7], [ball.x + r*0.7, ball.y - r*0.7],
-    [ball.x - r*0.7, ball.y + r*0.7], [ball.x + r*0.7, ball.y + r*0.7],
-  ];
+  // Hard clamp to canvas bounds first — ball center must stay inside
+  ball.x = Math.max(r, Math.min(lvl.cols * cs - r, ball.x));
+  ball.y = Math.max(r, Math.min(lvl.rows * cs - r, ball.y));
 
-  for (const [px, py] of pts) {
-    const col = Math.floor(px / cellSize);
-    const row = Math.floor(py / cellSize);
-    if (col < 0 || col >= lvl.cols || row < 0 || row >= lvl.rows) continue;
-    if (lvl.grid[row][col] !== 1) continue;
+  // Run multiple passes so fast/diagonal hits don't tunnel
+  for (let pass = 0; pass < 3; pass++) {
 
-    const wL = col * cellSize, wR = wL + cellSize;
-    const wT = row * cellSize, wB = wT + cellSize;
-    const aL = Math.abs(ball.x - wR), aR = Math.abs(ball.x - wL);
-    const aT = Math.abs(ball.y - wB), aB = Math.abs(ball.y - wT);
+    // Check every wall cell whose bounding box could overlap the ball
+    const colMin = Math.max(0, Math.floor((ball.x - r) / cs));
+    const colMax = Math.min(lvl.cols - 1, Math.floor((ball.x + r) / cs));
+    const rowMin = Math.max(0, Math.floor((ball.y - r) / cs));
+    const rowMax = Math.min(lvl.rows - 1, Math.floor((ball.y + r) / cs));
 
-    if (aL + r < aT + r && aL + r < aB - r) {
-      ball.x = wR + r + 0.5; ball.vx *= -0.2;
-    } else if (aR - r < aT + r && aR - r < aB - r) {
-      ball.x = wL - r - 0.5; ball.vx *= -0.2;
-    } else if (aT + r < aL + r && aT + r < aR - r) {
-      ball.y = wB + r + 0.5; ball.vy *= -0.2;
-    } else {
-      ball.y = wT - r - 0.5; ball.vy *= -0.2;
+    for (let row = rowMin; row <= rowMax; row++) {
+      for (let col = colMin; col <= colMax; col++) {
+        if (lvl.grid[row][col] !== 1) continue;
+
+        const wL = col * cs, wR = wL + cs;
+        const wT = row * cs, wB = wT + cs;
+
+        // Find the closest point on the wall rect to the ball center
+        const nearX = Math.max(wL, Math.min(wR, ball.x));
+        const nearY = Math.max(wT, Math.min(wB, ball.y));
+
+        const dx = ball.x - nearX;
+        const dy = ball.y - nearY;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist === 0 || dist >= r) continue; // no overlap
+
+        // Penetration depth
+        const pen = r - dist;
+
+        if (dist > 0) {
+          // Push out along the contact normal
+          const nx = dx / dist;
+          const ny = dy / dist;
+          ball.x += nx * (pen + 0.5);
+          ball.y += ny * (pen + 0.5);
+
+          // Cancel velocity component into the wall (with tiny restitution)
+          const dot = ball.vx * nx + ball.vy * ny;
+          if (dot < 0) {
+            ball.vx -= dot * nx * 1.05;
+            ball.vy -= dot * ny * 1.05;
+            // Dampen
+            ball.vx *= 0.75;
+            ball.vy *= 0.75;
+          }
+        } else {
+          // Ball center is exactly on the wall edge — eject on shortest axis
+          const overlapL = ball.x - wL;
+          const overlapR = wR - ball.x;
+          const overlapT = ball.y - wT;
+          const overlapB = wB - ball.y;
+          const minO = Math.min(overlapL, overlapR, overlapT, overlapB);
+          if (minO === overlapL) { ball.x = wL - r - 0.5; ball.vx = Math.abs(ball.vx) * 0.5; }
+          else if (minO === overlapR) { ball.x = wR + r + 0.5; ball.vx = -Math.abs(ball.vx) * 0.5; }
+          else if (minO === overlapT) { ball.y = wT - r - 0.5; ball.vy = Math.abs(ball.vy) * 0.5; }
+          else { ball.y = wB + r + 0.5; ball.vy = -Math.abs(ball.vy) * 0.5; }
+        }
+      }
     }
-  }
 
-  ball.x = Math.max(r, Math.min(lvl.cols * cellSize - r, ball.x));
-  ball.y = Math.max(r, Math.min(lvl.rows * cellSize - r, ball.y));
+    // Re-clamp after each pass
+    ball.x = Math.max(r, Math.min(lvl.cols * cs - r, ball.x));
+    ball.y = Math.max(r, Math.min(lvl.rows * cs - r, ball.y));
+  }
 }
 
 // ═══════════════════════════════════════════════
