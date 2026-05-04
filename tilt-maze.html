@@ -44,8 +44,19 @@
     inset: 0;
   }
 
-  /* Lock to portrait on all devices - rotate landscape back into portrait */
-  @media screen and (orientation: landscape) {
+  /* On wide screens (desktop landscape), constrain to a centered portrait column */
+  @media screen and (min-aspect-ratio: 1/1) and (pointer: fine) {
+    body {
+      width: auto;
+      left: 50%;
+      transform: translateX(-50%);
+      aspect-ratio: 9 / 16;
+      max-height: 100vh;
+    }
+  }
+
+  /* On mobile held sideways: rotate back to portrait */
+  @media screen and (orientation: landscape) and (pointer: coarse) {
     body {
       transform: rotate(-90deg);
       transform-origin: left top;
