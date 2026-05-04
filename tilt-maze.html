@@ -348,9 +348,143 @@
   .next-btn:active { transform: scale(0.96); }
 
   #confetti { position: absolute; inset: 0; pointer-events: none; }
+
+  /* ── SCREEN TRANSITIONS ── */
+  .screen {
+    transition: opacity 0.22s ease;
+  }
+  .screen.fading-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .screen.fading-in {
+    animation: fadeIn 0.25s ease forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* ── LEVEL TITLE CARD ── */
+  #level-title-card {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(13,13,15,0.85);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+  }
+  #level-title-card.show {
+    animation: titleCardAnim 1.5s ease forwards;
+  }
+  @keyframes titleCardAnim {
+    0%   { opacity: 0; transform: translateY(20px); }
+    18%  { opacity: 1; transform: translateY(0); }
+    70%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-28px); }
+  }
+  .ltc-num {
+    font-size: clamp(11px, 3vw, 13px);
+    color: var(--muted); letter-spacing: 4px;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .ltc-name {
+    font-size: clamp(26px, 8vw, 44px);
+    font-weight: 900; color: var(--accent);
+    letter-spacing: -1px;
+    text-shadow: 0 0 40px rgba(240,192,64,0.5);
+    text-align: center; padding: 0 24px;
+  }
+
+  /* ── WIN SCREEN TWEAKS ── */
+  #screen-win { background: var(--bg); gap: 20px; }
+
+  .win-title {
+    font-size: clamp(36px, 11vw, 60px); font-weight: 900;
+    letter-spacing: -1px;
+    animation: win-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) both, win-pulse 1.2s 0.35s ease-in-out infinite alternate;
+  }
+  @keyframes win-pop {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  @keyframes win-pulse {
+    from { text-shadow: 0 0 20px rgba(64,224,160,0.3); color: var(--goal); }
+    to   { text-shadow: 0 0 60px rgba(64,224,160,0.9); color: #80ffcc; }
+  }
+
+  .win-new-best {
+    font-size: clamp(13px, 3.8vw, 16px);
+    color: var(--accent); font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    animation: newBestFlash 0.6s ease-in-out infinite alternate;
+    display: none;
+  }
+  .win-new-best.show { display: block; }
+  @keyframes newBestFlash {
+    from { opacity: 0.6; text-shadow: none; }
+    to   { opacity: 1; text-shadow: 0 0 20px rgba(240,192,64,0.8); }
+  }
+
+  .win-time {
+    font-size: clamp(12px, 3.2vw, 14px);
+    color: var(--muted); letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .win-time span { color: var(--text); font-weight: 700; }
+
+  .win-btns {
+    display: flex; flex-direction: column;
+    gap: 10px; align-items: center; width: 100%;
+  }
+
+  .win-menu-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--wall-top);
+    border-radius: 10px;
+    padding: 12px 48px;
+    font-size: clamp(13px, 3.5vw, 15px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    width: 220px;
+  }
+  .win-menu-btn:active { color: var(--text); border-color: var(--muted); }
+
+  /* ── SOUND TOGGLE ── */
+  #sound-toggle {
+    position: fixed; top: 14px; right: 16px;
+    background: transparent;
+    border: 1px solid var(--wall-top);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    padding: 6px 10px;
+    cursor: pointer;
+    z-index: 200;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s, border-color 0.15s;
+    line-height: 1;
+  }
+  #sound-toggle:active { color: var(--text); border-color: var(--muted); }
+  #sound-toggle.muted { opacity: 0.4; }
 </style>
 </head>
 <body>
+
+<!-- ══════════ SOUND TOGGLE (global) ══════════ -->
+<button id="sound-toggle" title="Toggle Sound">🔊</button>
+
+<!-- ══════════ LEVEL TITLE CARD ══════════ -->
+<div id="level-title-card">
+  <div class="ltc-num" id="ltcNum">Level 1</div>
+  <div class="ltc-name" id="ltcName">The Beginning</div>
+</div>
 
 <!-- ══════════ START SCREEN ══════════ -->
 <div id="screen-start" class="screen">
@@ -439,16 +573,223 @@
 <!-- ══════════ WIN SCREEN ══════════ -->
 <div id="screen-win" class="screen hidden">
   <canvas id="confetti"></canvas>
-  <div class="win-title">NICE!</div>
+  <div class="win-title" id="winTitle">NICE!</div>
+  <div class="win-new-best" id="winNewBest">🏆 NEW BEST!</div>
   <div class="win-level" id="winLevelLabel">Level 1 Complete</div>
+  <div class="win-time">Time: <span id="winTime">0:00</span></div>
   <div class="win-score">
     <div class="label">Best Level</div>
     <div class="num" id="winBestNum">1</div>
   </div>
-  <button class="next-btn" id="nextBtn">Next Level →</button>
+  <div class="win-btns">
+    <button class="next-btn" id="nextBtn">Next Level →</button>
+    <button class="win-menu-btn" id="winMenuBtn">⌂ Menu</button>
+  </div>
 </div>
 
 <script>
+// ═══════════════════════════════════════════════
+// SOUND ENGINE (Web Audio API — no external files)
+// ═══════════════════════════════════════════════
+let audioCtx = null;
+let soundEnabled = true;
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Persistent rolling hum oscillator
+let rollOsc = null, rollGain = null;
+
+function startRollHum() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    if (rollOsc) { try { rollOsc.stop(); } catch(e){} }
+    rollOsc  = ctx.createOscillator();
+    rollGain = ctx.createGain();
+    rollOsc.type = 'sine';
+    rollOsc.frequency.value = 60;
+    rollGain.gain.value = 0;
+    rollOsc.connect(rollGain);
+    rollGain.connect(ctx.destination);
+    rollOsc.start();
+  } catch(e) {}
+}
+
+function stopRollHum() {
+  if (rollGain) {
+    try {
+      const ctx = getAudioCtx();
+      rollGain.gain.setTargetAtTime(0, ctx.currentTime, 0.1);
+    } catch(e) {}
+  }
+}
+
+function updateRollHum(speed) {
+  if (!soundEnabled || !rollGain || !rollOsc) return;
+  try {
+    const ctx = getAudioCtx();
+    const norm  = Math.min(speed / 8, 1);
+    const gain  = norm * 0.06;
+    const freq  = 55 + norm * 80;
+    rollGain.gain.setTargetAtTime(gain, ctx.currentTime, 0.05);
+    rollOsc.frequency.setTargetAtTime(freq, ctx.currentTime, 0.05);
+  } catch(e) {}
+}
+
+function playBonk(intensity) {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const g   = ctx.createGain();
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(180 + intensity * 60, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.08);
+    g.gain.setValueAtTime(Math.min(intensity * 0.12, 0.18), ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.12);
+  } catch(e) {}
+}
+
+function playWarp() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const g   = ctx.createGain();
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.32);
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.38);
+  } catch(e) {}
+}
+
+function playReset() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const g   = ctx.createGain();
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.18);
+    g.gain.setValueAtTime(0.12, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.25);
+  } catch(e) {}
+}
+
+function playWin() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
+    notes.forEach((freq, i) => {
+      const g   = ctx.createGain();
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.13;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.2, t + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.4);
+    });
+  } catch(e) {}
+}
+
+function playMenuTap() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const g   = ctx.createGain();
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 660;
+    g.gain.setValueAtTime(0.08, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.1);
+  } catch(e) {}
+}
+
+// Sound toggle button
+const $soundToggle = document.getElementById('sound-toggle');
+$soundToggle.addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  $soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+  $soundToggle.classList.toggle('muted', !soundEnabled);
+  if (!soundEnabled) stopRollHum();
+  playMenuTap();
+});
+
+// ═══════════════════════════════════════════════
+// WIN PHRASES
+// ═══════════════════════════════════════════════
+const WIN_PHRASES = [
+  'NICE!', 'NAILED IT!', 'BRAVO!', 'LEGENDARY!',
+  'GET IN!', 'FLAWLESS!', 'CRISPY!', 'LET\'S GO!',
+  'STUNNING!', 'GOATED!',
+];
+
+// ═══════════════════════════════════════════════
+// SCREEN TRANSITION HELPER
+// ═══════════════════════════════════════════════
+function showScreen(el) {
+  // Find all currently visible screens and fade them out
+  document.querySelectorAll('.screen:not(.hidden)').forEach(s => {
+    s.classList.add('fading-out');
+    setTimeout(() => {
+      s.classList.add('hidden');
+      s.classList.remove('fading-out');
+    }, 220);
+  });
+  setTimeout(() => {
+    el.classList.remove('hidden');
+    el.classList.add('fading-in');
+    setTimeout(() => el.classList.remove('fading-in'), 260);
+  }, 180);
+}
+
+function goToMenu() {
+  gameRunning = false;
+  confRunning = false;
+  clearInterval(timerInterval);
+  stopRollHum();
+  $calibOv.classList.add('hidden');
+  playMenuTap();
+  showScreen($start);
+}
+
+// ═══════════════════════════════════════════════
+// LEVEL TITLE CARD
+// ═══════════════════════════════════════════════
+const $ltCard = document.getElementById('level-title-card');
+const $ltcNum = document.getElementById('ltcNum');
+const $ltcName = document.getElementById('ltcName');
+
+function showLevelTitleCard(levelIndex, lvl) {
+  $ltcNum.textContent  = `Level ${levelIndex + 1}`;
+  $ltcName.textContent = lvl.name;
+  $ltCard.classList.remove('show');
+  void $ltCard.offsetWidth; // force reflow
+  $ltCard.classList.add('show');
+  setTimeout(() => $ltCard.classList.remove('show'), 1600);
+}
+
 // ═══════════════════════════════════════════════
 // SAVE / LOAD
 // ═══════════════════════════════════════════════
@@ -812,6 +1153,7 @@ const $hudBest    = document.getElementById('hudBest');
 const $hudTime    = document.getElementById('hudTime');
 const $winLbl     = document.getElementById('winLevelLabel');
 const $winBest    = document.getElementById('winBestNum');
+const $winTimeEl  = document.getElementById('winTime');
 const $saveInf    = document.getElementById('saveInfo');
 const $calibOv    = document.getElementById('calib-overlay');
 const $sensSlider = document.getElementById('sensSlider');
@@ -907,14 +1249,10 @@ $lockBtn.addEventListener('click', () => {
   saveData.offsetX     = tiltOffsetX;
   saveData.offsetY     = tiltOffsetY;
   writeSave(saveData);
-
   gameRunning = false;
   clearInterval(timerInterval);
   isCalibMode = false;
-
-  $game.classList.add('hidden');
-  $calibOv.classList.add('hidden');
-  $start.classList.remove('hidden');
+  goToMenu();
 });
 
 // ═══════════════════════════════════════════════
@@ -1032,6 +1370,7 @@ function collideBall() {
       ball.vx = 0; ball.vy = 0;
       tiltX = 0; tiltY = 0;
       resetCooldown = 15;
+      playReset();
       return;
     }
   }
@@ -1060,6 +1399,7 @@ function collideBall() {
         ball.vy = Math.sin(ang) * spd;
         teleportCooldown = TELEPORT_COOLDOWN;
         teleportFlash = 18;
+        playWarp();
         break;
       }
     }
@@ -1112,6 +1452,7 @@ function collideBall() {
             ball.vy -= dot * ny * rest;
             ball.vx *= damp;
             ball.vy *= damp;
+            if (Math.abs(dot) > 1.5) playBonk(Math.abs(dot));
           }
         } else {
           const overlapL = ball.x - wL, overlapR = wR - ball.x;
@@ -1443,6 +1784,9 @@ function gameLoop() {
   collideBall();
   drawFrame();
 
+  // Update rolling sound
+  updateRollHum(Math.hypot(ball.vx, ball.vy));
+
   if (checkWin()) {
     gameRunning = false;
     clearInterval(timerInterval);
@@ -1458,10 +1802,10 @@ function gameLoop() {
 // ═══════════════════════════════════════════════
 function showWinScreen() {
   const done = currentLevel + 1;
-  if (done > saveData.bestLevel) {
+  const isNewBest = done > saveData.bestLevel;
+  if (isNewBest) {
     saveData.bestLevel = done;
     writeSave(saveData);
-    // Keep continue button visible and update start screen text
     $saveInf.textContent = `Best level: ${saveData.bestLevel}`;
     document.getElementById('continueBtn').classList.remove('hidden');
   }
@@ -1469,8 +1813,23 @@ function showWinScreen() {
   $winLbl.textContent  = `Level ${done} — "${lvl.name}" Complete!`;
   $winBest.textContent = saveData.bestLevel;
 
-  $game.classList.add('hidden');
-  $win.classList.remove('hidden');
+  // Random win phrase
+  const phrase = WIN_PHRASES[Math.floor(Math.random() * WIN_PHRASES.length)];
+  document.getElementById('winTitle').textContent = phrase;
+
+  // New best badge
+  const $newBest = document.getElementById('winNewBest');
+  $newBest.classList.toggle('show', isNewBest);
+
+  // Time display
+  const elapsed = Math.floor((Date.now() - levelStartTime) / 1000);
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  document.getElementById('winTime').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+
+  stopRollHum();
+  playWin();
+  showScreen($win);
   startConfetti();
 }
 
@@ -1483,20 +1842,35 @@ function startConfetti() {
   confCanvas.width  = window.innerWidth;
   confCanvas.height = window.innerHeight;
   confParts = [];
-  const colors = ['#f0c040','#40e0a0','#e040a0','#40a0e0','#e07040','#ffffff'];
-  for (let i = 0; i < 90; i++) {
+  const colors = ['#f0c040','#40e0a0','#e040a0','#40a0e0','#e07040','#ffffff','#c040f0','#ff6060'];
+  const shapes = ['rect', 'circle', 'star', 'tri'];
+  for (let i = 0; i < 150; i++) {
     confParts.push({
       x: Math.random() * confCanvas.width,
-      y: -10 - Math.random() * 200,
-      vx: (Math.random()-0.5)*3, vy: 2+Math.random()*3,
-      r: 4+Math.random()*5,
+      y: -10 - Math.random() * 300,
+      vx: (Math.random()-0.5)*4, vy: 1.5+Math.random()*4,
+      r: 4+Math.random()*7,
       color: colors[Math.floor(Math.random()*colors.length)],
-      spin: Math.random()*Math.PI*2, spinV: (Math.random()-0.5)*0.2,
-      shape: Math.random()>0.5 ? 'rect' : 'circle',
+      spin: Math.random()*Math.PI*2, spinV: (Math.random()-0.5)*0.25,
+      wobble: Math.random()*Math.PI*2, wobbleV: 0.05+Math.random()*0.05,
+      shape: shapes[Math.floor(Math.random()*shapes.length)],
     });
   }
   confRunning = true;
   animateConfetti();
+}
+
+function drawStar(ctx, x, y, r, spin) {
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a1 = spin + (i * Math.PI * 2) / 5 - Math.PI/2;
+    const a2 = spin + ((i + 0.5) * Math.PI * 2) / 5 - Math.PI/2;
+    const ox = x + Math.cos(a1) * r, oy = y + Math.sin(a1) * r;
+    const ix = x + Math.cos(a2) * r*0.45, iy = y + Math.sin(a2) * r*0.45;
+    if (i === 0) ctx.moveTo(ox, oy); else ctx.lineTo(ox, oy);
+    ctx.lineTo(ix, iy);
+  }
+  ctx.closePath();
 }
 
 function animateConfetti() {
@@ -1504,15 +1878,29 @@ function animateConfetti() {
   confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
   let alive = 0;
   for (const p of confParts) {
-    p.x += p.vx; p.y += p.vy;
-    p.spin += p.spinV; p.vy += 0.04;
+    p.x  += p.vx + Math.sin(p.wobble) * 0.8;
+    p.y  += p.vy;
+    p.spin   += p.spinV;
+    p.vy     += 0.05;
+    p.wobble += p.wobbleV;
     if (p.y < confCanvas.height + 20) alive++;
     confCtx.save();
     confCtx.translate(p.x, p.y);
     confCtx.rotate(p.spin);
     confCtx.fillStyle = p.color;
-    if (p.shape === 'rect') confCtx.fillRect(-p.r, -p.r/2, p.r*2, p.r);
-    else { confCtx.beginPath(); confCtx.arc(0,0,p.r,0,Math.PI*2); confCtx.fill(); }
+    if (p.shape === 'rect') {
+      confCtx.fillRect(-p.r, -p.r/2, p.r*2, p.r);
+    } else if (p.shape === 'circle') {
+      confCtx.beginPath(); confCtx.arc(0,0,p.r,0,Math.PI*2); confCtx.fill();
+    } else if (p.shape === 'star') {
+      drawStar(confCtx, 0, 0, p.r, 0);
+      confCtx.fill();
+    } else {
+      // triangle
+      confCtx.beginPath();
+      confCtx.moveTo(0, -p.r); confCtx.lineTo(p.r*0.87, p.r*0.5); confCtx.lineTo(-p.r*0.87, p.r*0.5);
+      confCtx.closePath(); confCtx.fill();
+    }
     confCtx.restore();
   }
   if (alive > 0) requestAnimationFrame(animateConfetti);
@@ -1525,24 +1913,31 @@ function animateConfetti() {
 function launchGame(calibMode) {
   requestTiltPermission();
   confRunning = false;
-  $start.classList.add('hidden');
-  $win.classList.add('hidden');
-  $game.classList.remove('hidden');
 
   const lvl = calibMode ? CALIB_LEVEL : LEVELS[currentLevel % LEVELS.length];
-  setupLevel(lvl, calibMode);
-  gameRunning = true;
-  requestAnimationFrame(gameLoop);
+  showScreen($game);
+
+  setTimeout(() => {
+    setupLevel(lvl, calibMode);
+    gameRunning = true;
+    startRollHum();
+    requestAnimationFrame(gameLoop);
+    if (!calibMode) {
+      showLevelTitleCard(currentLevel, lvl);
+    }
+  }, 200);
 }
 
 document.getElementById('startBtn').addEventListener('click', () => {
   currentLevel = 0;
+  playMenuTap();
   launchGame(false);
 });
 
 document.getElementById('continueBtn').addEventListener('click', () => {
   // Resume from last beaten level (bestLevel is 1-indexed count of cleared levels)
   currentLevel = Math.max(0, saveData.bestLevel - 1);
+  playMenuTap();
   launchGame(false);
 });
 
@@ -1614,31 +2009,27 @@ document.getElementById('importFileInput').addEventListener('change', (e) => {
 });
 
 document.getElementById('calibMenuBtn').addEventListener('click', () => {
+  playMenuTap();
   launchGame(true);
 });
 
 $restartBtn.addEventListener('click', () => {
+  playMenuTap();
   const lvl = getActiveLevel();
   setupLevel(lvl, isCalibMode);
+  startRollHum();
 });
 
-$menuBtn.addEventListener('click', () => {
-  gameRunning = false;
-  clearInterval(timerInterval);
-  $game.classList.add('hidden');
-  $calibOv.classList.add('hidden');
-  $start.classList.remove('hidden');
-});
+$menuBtn.addEventListener('click', goToMenu);
 
 document.getElementById('nextBtn').addEventListener('click', () => {
   confRunning = false;
   currentLevel++;
-  $win.classList.add('hidden');
-  $game.classList.remove('hidden');
-  setupLevel(LEVELS[currentLevel % LEVELS.length], false);
-  gameRunning = true;
-  requestAnimationFrame(gameLoop);
+  playMenuTap();
+  launchGame(false);
 });
+
+document.getElementById('winMenuBtn').addEventListener('click', goToMenu);
 
 // ═══════════════════════════════════════════════
 // RESIZE
@@ -1655,6 +2046,11 @@ window.addEventListener('resize', () => {
     canvas.height = cellSize * lvl.rows;
   }
 });
+
+// ── iOS AudioContext unlock on first touch ─────
+document.addEventListener('touchstart', () => {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}, { once: true });
 
 document.addEventListener('touchmove', e => {
   if (e.target.type === 'range') return; // let slider scroll
