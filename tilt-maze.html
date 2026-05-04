@@ -1,0 +1,2537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="screen-orientation" content="portrait">
+<meta name="theme-color" content="#0d0d0f">
+<title>Tilt Maze</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #1a1a1f;
+    --wall: #2a2a35;
+    --wall-top: #3d3d50;
+    --ball: #f0c040;
+    --ball-shine: #fff8dc;
+    --goal: #40e0a0;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --accent: #f0c040;
+    --ice: #a8d8f0;
+    --mud: #7a5c38;
+    --teleport: #c040f0;
+    --bouncy: #f04060;
+    --mover: #f08020;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+    touch-action: none;
+    user-select: none;
+    /* Portrait lock: prevent rotation */
+    position: fixed;
+    inset: 0;
+  }
+
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .hidden { display: none !important; }
+
+  /* ── START SCREEN ── */
+  #screen-start { gap: 24px; background: var(--bg); }
+
+  .title-wrap { text-align: center; line-height: 1; }
+  .title-big {
+    font-size: clamp(48px, 14vw, 80px);
+    font-weight: 900; letter-spacing: -2px;
+    color: var(--accent);
+    text-shadow: 0 0 40px rgba(240,192,64,0.4);
+    display: block;
+  }
+  .title-sub {
+    font-size: clamp(13px, 3.5vw, 18px);
+    color: var(--muted); letter-spacing: 4px;
+    text-transform: uppercase; display: block; margin-top: 6px;
+  }
+
+  .ball-demo {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--ball-shine) 0%, var(--ball) 45%, #c08000 100%);
+    box-shadow: 0 0 24px rgba(240,192,64,0.5), 0 4px 16px rgba(0,0,0,0.6);
+    animation: bounce-demo 1.8s ease-in-out infinite;
+  }
+  @keyframes bounce-demo {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%       { transform: translateY(-14px) rotate(20deg); }
+  }
+
+  .instructions {
+    background: var(--surface);
+    border: 1px solid var(--wall-top);
+    border-radius: 12px;
+    padding: 16px 24px;
+    text-align: center;
+    font-size: clamp(12px, 3.2vw, 14px);
+    color: var(--muted); line-height: 1.8;
+    max-width: 290px;
+  }
+  .instructions strong { color: var(--text); }
+
+  .menu-btns {
+    display: flex; flex-direction: column;
+    gap: 12px; align-items: center; width: 100%;
+  }
+
+  .start-btn {
+    background: var(--accent); color: #1a1000;
+    border: none; border-radius: 10px;
+    padding: 16px 48px;
+    font-size: clamp(15px, 4vw, 18px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(240,192,64,0.35);
+    transition: transform 0.1s, box-shadow 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    width: 220px;
+  }
+  .start-btn:active { transform: scale(0.96); box-shadow: none; }
+
+  .calib-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--wall-top);
+    border-radius: 10px;
+    padding: 12px 48px;
+    font-size: clamp(12px, 3.5vw, 14px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    width: 220px;
+  }
+  .calib-btn:active { color: var(--text); border-color: var(--muted); }
+
+  .save-info {
+    font-size: 12px; color: var(--muted);
+    text-align: center; opacity: 0.7;
+  }
+
+  .continue-btn {
+    background: transparent;
+    color: var(--goal);
+    border: 1px solid var(--goal);
+    border-radius: 10px;
+    padding: 14px 48px;
+    font-size: clamp(14px, 3.8vw, 16px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(64,224,160,0.15);
+    transition: transform 0.1s, box-shadow 0.1s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    width: 220px;
+  }
+  .continue-btn:active { transform: scale(0.96); background: rgba(64,224,160,0.08); }
+
+  .save-btns {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+  }
+
+  .io-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--wall-top);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: clamp(11px, 3vw, 12px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .io-btn:active { color: var(--text); border-color: var(--muted); }
+
+  .import-flash {
+    font-size: 11px; color: var(--goal);
+    text-align: center; height: 14px; margin-top: 2px;
+    transition: opacity 0.5s;
+  }
+
+  /* ── GAME SCREEN ── */
+  #screen-game {
+    flex-direction: column; background: var(--bg);
+    padding: 0; justify-content: flex-start;
+  }
+
+  #hud {
+    width: 100%; display: flex;
+    justify-content: space-between; align-items: center;
+    padding: 12px 20px 8px; flex-shrink: 0;
+  }
+  .hud-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .hud-value { font-size: 22px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .hud-cell { text-align: center; }
+  .hud-cell.right { text-align: right; }
+
+  #game-btns {
+    display: flex; justify-content: center; gap: 12px;
+    padding: 4px 20px 8px; flex-shrink: 0;
+  }
+  .game-btn {
+    background: var(--surface);
+    border: 1px solid var(--wall-top);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Courier New', monospace;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .game-btn:active { color: var(--text); border-color: var(--muted); }
+
+  #obstacle-legend {
+    width: 100%; display: flex; gap: 8px; flex-wrap: wrap;
+    justify-content: center; padding: 0 16px 6px; flex-shrink: 0;
+    min-height: 20px;
+  }
+  .legend-pill {
+    font-size: 10px; font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 10px;
+    opacity: 0.85; white-space: nowrap;
+  }
+  .legend-ice    { background: rgba(168,216,240,0.18); color: var(--ice);    border: 1px solid rgba(168,216,240,0.3); }
+  .legend-mud    { background: rgba(122,92,56,0.25);   color: #c8a070;       border: 1px solid rgba(122,92,56,0.5); }
+  .legend-warp   { background: rgba(192,64,240,0.18);  color: var(--teleport); border: 1px solid rgba(192,64,240,0.3); }
+  .legend-bouncy { background: rgba(240,64,96,0.18);   color: var(--bouncy); border: 1px solid rgba(240,64,96,0.3); }
+  .legend-mover  { background: rgba(240,128,32,0.18);  color: var(--mover);  border: 1px solid rgba(240,128,32,0.3); }
+
+  #canvas-wrap {
+    flex: 1; width: 100%; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #gameCanvas { display: block; }
+
+  /* ── CALIBRATION OVERLAY ── */
+  #calib-overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    padding-bottom: 24px;
+    pointer-events: none;
+  }
+
+  #calib-panel {
+    background: rgba(13,13,15,0.88);
+    border: 1px solid var(--wall-top);
+    border-radius: 16px;
+    padding: 20px 24px 16px;
+    width: min(320px, 88vw);
+    display: flex; flex-direction: column; gap: 16px;
+    pointer-events: all;
+  }
+
+  .calib-hint {
+    font-size: 12px; color: var(--muted);
+    text-align: center; line-height: 1.6;
+  }
+  .calib-hint strong { color: var(--text); }
+
+  .calib-row { display: flex; flex-direction: column; gap: 6px; }
+  .calib-row-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .calib-row-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .calib-row-val   { font-size: 13px; font-weight: 700; color: var(--accent); }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px;
+    background: var(--wall-top); border-radius: 3px;
+    outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(240,192,64,0.4);
+    cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); border: none;
+    box-shadow: 0 0 10px rgba(240,192,64,0.4);
+    cursor: pointer;
+  }
+
+  .zero-btn {
+    background: var(--surface);
+    border: 1px solid var(--wall-top);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 12px 0; width: 100%;
+    cursor: pointer;
+    transition: border-color 0.1s, background 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    line-height: 1.4;
+  }
+  .zero-btn:active { background: var(--wall); border-color: var(--muted); }
+
+  .zero-status {
+    font-size: 11px; color: var(--goal);
+    text-align: center; height: 14px;
+    transition: opacity 0.5s;
+  }
+
+  .lock-btn {
+    background: var(--goal); color: #001a0e;
+    border: none; border-radius: 10px;
+    padding: 14px 0; width: 100%;
+    font-size: clamp(14px, 4vw, 16px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 24px rgba(64,224,160,0.25);
+    transition: transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .lock-btn:active { transform: scale(0.97); }
+
+  /* ── WIN SCREEN ── */
+  #screen-win { background: var(--bg); gap: 24px; }
+
+  .win-title {
+    font-size: clamp(36px, 11vw, 60px); font-weight: 900;
+    color: var(--goal); letter-spacing: -1px;
+    animation: win-pulse 1s ease-in-out infinite alternate;
+  }
+  @keyframes win-pulse {
+    from { text-shadow: 0 0 20px rgba(64,224,160,0.3); }
+    to   { text-shadow: 0 0 60px rgba(64,224,160,0.8); }
+  }
+  .win-level { font-size: clamp(14px,4vw,18px); color: var(--muted); letter-spacing: 3px; text-transform: uppercase; }
+  .win-score {
+    background: var(--surface); border: 1px solid var(--goal);
+    border-radius: 12px; padding: 16px 40px; text-align: center;
+  }
+  .win-score .label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .win-score .num   { font-size: 48px; font-weight: 700; color: var(--accent); line-height: 1.1; }
+
+  .next-btn {
+    background: var(--goal); color: #001a0e;
+    border: none; border-radius: 10px;
+    padding: 16px 48px;
+    font-size: clamp(15px,4vw,18px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(64,224,160,0.3);
+    transition: transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .next-btn:active { transform: scale(0.96); }
+
+  #confetti { position: absolute; inset: 0; pointer-events: none; }
+
+  /* ── SCREEN TRANSITIONS ── */
+  .screen {
+    transition: opacity 0.22s ease;
+  }
+  .screen.fading-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .screen.fading-in {
+    animation: fadeIn 0.25s ease forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* ── LEVEL TITLE CARD ── */
+  #level-title-card {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(13,13,15,0.85);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+  }
+  #level-title-card.show {
+    animation: titleCardAnim 1.5s ease forwards;
+  }
+  @keyframes titleCardAnim {
+    0%   { opacity: 0; transform: translateY(20px); }
+    18%  { opacity: 1; transform: translateY(0); }
+    70%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-28px); }
+  }
+  .ltc-num {
+    font-size: clamp(11px, 3vw, 13px);
+    color: var(--muted); letter-spacing: 4px;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .ltc-name {
+    font-size: clamp(26px, 8vw, 44px);
+    font-weight: 900; color: var(--accent);
+    letter-spacing: -1px;
+    text-shadow: 0 0 40px rgba(240,192,64,0.5);
+    text-align: center; padding: 0 24px;
+  }
+
+  /* ── WIN SCREEN TWEAKS ── */
+  #screen-win { background: var(--bg); gap: 20px; }
+
+  .win-title {
+    font-size: clamp(36px, 11vw, 60px); font-weight: 900;
+    letter-spacing: -1px;
+    animation: win-pop 0.35s cubic-bezier(0.34,1.56,0.64,1) both, win-pulse 1.2s 0.35s ease-in-out infinite alternate;
+  }
+  @keyframes win-pop {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  @keyframes win-pulse {
+    from { text-shadow: 0 0 20px rgba(64,224,160,0.3); color: var(--goal); }
+    to   { text-shadow: 0 0 60px rgba(64,224,160,0.9); color: #80ffcc; }
+  }
+
+  .win-new-best {
+    font-size: clamp(13px, 3.8vw, 16px);
+    color: var(--accent); font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    animation: newBestFlash 0.6s ease-in-out infinite alternate;
+    display: none;
+  }
+  .win-new-best.show { display: block; }
+  @keyframes newBestFlash {
+    from { opacity: 0.6; text-shadow: none; }
+    to   { opacity: 1; text-shadow: 0 0 20px rgba(240,192,64,0.8); }
+  }
+
+  .win-time {
+    font-size: clamp(12px, 3.2vw, 14px);
+    color: var(--muted); letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .win-time span { color: var(--text); font-weight: 700; }
+
+  .win-btns {
+    display: flex; flex-direction: column;
+    gap: 10px; align-items: center; width: 100%;
+  }
+
+  .win-menu-btn {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--wall-top);
+    border-radius: 10px;
+    padding: 12px 48px;
+    font-size: clamp(13px, 3.5vw, 15px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    width: 220px;
+  }
+  .win-menu-btn:active { color: var(--text); border-color: var(--muted); }
+
+  /* ── SOUND TOGGLE ── */
+  #sound-toggle {
+    position: fixed; top: 14px; right: 16px;
+    background: transparent;
+    border: 1px solid var(--wall-top);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    padding: 6px 10px;
+    cursor: pointer;
+    z-index: 200;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s, border-color 0.15s;
+    line-height: 1;
+  }
+  #sound-toggle:active { color: var(--text); border-color: var(--muted); }
+  #sound-toggle.muted { opacity: 0.4; }
+</style>
+</head>
+<body>
+
+<!-- ══════════ SOUND TOGGLE (global) ══════════ -->
+<button id="sound-toggle" title="Toggle Sound">🔊</button>
+
+<!-- ══════════ LEVEL TITLE CARD ══════════ -->
+<div id="level-title-card">
+  <div class="ltc-num" id="ltcNum">Level 1</div>
+  <div class="ltc-name" id="ltcName">The Beginning</div>
+</div>
+
+<!-- ══════════ START SCREEN ══════════ -->
+<div id="screen-start" class="screen">
+  <div class="title-wrap">
+    <span class="title-big">TILT</span>
+    <span class="title-sub">maze game</span>
+  </div>
+
+  <div class="ball-demo"></div>
+
+  <div class="instructions">
+    <strong>Tilt your phone</strong> to roll the ball.<br>
+    Reach the <strong style="color:var(--goal)">glowing goal</strong> to advance.<br>
+    Watch out for <strong style="color:var(--ice)">ice</strong>, <strong style="color:#c8a070">mud</strong>,
+    <strong style="color:var(--teleport)">warps</strong> &amp; <strong style="color:var(--bouncy)">bouncy walls</strong>!
+  </div>
+
+  <div class="menu-btns">
+    <button class="start-btn" id="startBtn">NEW GAME</button>
+    <button class="continue-btn hidden" id="continueBtn">▶ Continue</button>
+    <button class="calib-btn" id="calibMenuBtn">⚙ Calibrate</button>
+  </div>
+
+  <div class="save-info" id="saveInfo">Best level: —</div>
+
+  <div class="save-btns">
+    <button class="io-btn" id="downloadSaveBtn">⬇ Download Save</button>
+    <button class="io-btn" id="importSaveBtn">📂 Import Save</button>
+  </div>
+  <input type="file" id="importFileInput" accept=".json" style="display:none">
+  <div class="import-flash" id="importFlash"></div>
+</div>
+
+<!-- ══════════ GAME SCREEN ══════════ -->
+<div id="screen-game" class="screen hidden">
+  <div id="hud">
+    <div class="hud-cell">
+      <div class="hud-label">Level</div>
+      <div class="hud-value" id="hudLevel">1</div>
+    </div>
+    <div class="hud-cell">
+      <div class="hud-label">Best</div>
+      <div class="hud-value" id="hudBest">—</div>
+    </div>
+    <div class="hud-cell right">
+      <div class="hud-label">Time</div>
+      <div class="hud-value" id="hudTime">0:00</div>
+    </div>
+  </div>
+  <div id="game-btns">
+    <button class="game-btn" id="restartBtn" title="Restart Level">↺ Restart</button>
+    <button class="game-btn" id="menuBtn" title="Back to Menu">⌂ Menu</button>
+  </div>
+  <div id="obstacle-legend"></div>
+
+  <div id="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Calibration overlay — only shown in calib mode -->
+    <div id="calib-overlay" class="hidden">
+      <div id="calib-panel">
+        <div class="calib-hint">
+          Roll the ball around. Adjust until it feels right.<br>
+          <strong>Hold still</strong>, then tap Zero to remove drift.
+        </div>
+
+        <div class="calib-row">
+          <div class="calib-row-top">
+            <span class="calib-row-label">Sensitivity</span>
+            <span class="calib-row-val" id="sensVal">5</span>
+          </div>
+          <input type="range" id="sensSlider" min="1" max="13" step="1" value="5">
+        </div>
+
+        <div class="calib-row">
+          <button class="zero-btn" id="zeroBtn">⊙ Zero drift<br>tap while holding still</button>
+          <div class="zero-status" id="zeroStatus"></div>
+        </div>
+
+        <button class="lock-btn" id="lockBtn">Lock it in →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ WIN SCREEN ══════════ -->
+<div id="screen-win" class="screen hidden">
+  <canvas id="confetti"></canvas>
+  <div class="win-title" id="winTitle">NICE!</div>
+  <div class="win-new-best" id="winNewBest">🏆 NEW BEST!</div>
+  <div class="win-level" id="winLevelLabel">Level 1 Complete</div>
+  <div class="win-time">Time: <span id="winTime">0:00</span></div>
+  <div class="win-score">
+    <div class="label">Best Level</div>
+    <div class="num" id="winBestNum">1</div>
+  </div>
+  <div class="win-btns">
+    <button class="next-btn" id="nextBtn">Next Level →</button>
+    <button class="win-menu-btn" id="winMenuBtn">⌂ Menu</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// SOUND ENGINE (Web Audio API — no external files)
+// ═══════════════════════════════════════════════
+let audioCtx = null;
+let soundEnabled = true;
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Persistent rolling hum oscillator
+let rollOsc = null, rollGain = null;
+
+function startRollHum() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    if (rollOsc) { try { rollOsc.stop(); } catch(e){} }
+    rollOsc  = ctx.createOscillator();
+    rollGain = ctx.createGain();
+    rollOsc.type = 'sine';
+    rollOsc.frequency.value = 60;
+    rollGain.gain.value = 0;
+    rollOsc.connect(rollGain);
+    rollGain.connect(ctx.destination);
+    rollOsc.start();
+  } catch(e) {}
+}
+
+function stopRollHum() {
+  if (rollGain) {
+    try {
+      const ctx = getAudioCtx();
+      rollGain.gain.setTargetAtTime(0, ctx.currentTime, 0.1);
+    } catch(e) {}
+  }
+}
+
+function updateRollHum(speed) {
+  if (!soundEnabled || !rollGain || !rollOsc) return;
+  try {
+    const ctx = getAudioCtx();
+    const norm  = Math.min(speed / 8, 1);
+    const gain  = norm * 0.06;
+    const freq  = 55 + norm * 80;
+    rollGain.gain.setTargetAtTime(gain, ctx.currentTime, 0.05);
+    rollOsc.frequency.setTargetAtTime(freq, ctx.currentTime, 0.05);
+  } catch(e) {}
+}
+
+function playBonk(intensity) {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const g   = ctx.createGain();
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(180 + intensity * 60, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.08);
+    g.gain.setValueAtTime(Math.min(intensity * 0.12, 0.18), ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.12);
+  } catch(e) {}
+}
+
+function playWarp() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const g   = ctx.createGain();
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.32);
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.38);
+  } catch(e) {}
+}
+
+function playReset() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const g   = ctx.createGain();
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.18);
+    g.gain.setValueAtTime(0.12, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.25);
+  } catch(e) {}
+}
+
+function playWin() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
+    notes.forEach((freq, i) => {
+      const g   = ctx.createGain();
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.13;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.2, t + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.4);
+    });
+  } catch(e) {}
+}
+
+function playMenuTap() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = getAudioCtx();
+    const g   = ctx.createGain();
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 660;
+    g.gain.setValueAtTime(0.08, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.1);
+  } catch(e) {}
+}
+
+// Sound toggle button
+const $soundToggle = document.getElementById('sound-toggle');
+$soundToggle.addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  $soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+  $soundToggle.classList.toggle('muted', !soundEnabled);
+  if (!soundEnabled) stopRollHum();
+  playMenuTap();
+});
+
+// ═══════════════════════════════════════════════
+// WIN PHRASES
+// ═══════════════════════════════════════════════
+const WIN_PHRASES = [
+  'NICE!', 'NAILED IT!', 'BRAVO!', 'LEGENDARY!',
+  'GET IN!', 'FLAWLESS!', 'CRISPY!', 'LET\'S GO!',
+  'STUNNING!', 'GOATED!',
+];
+
+// ═══════════════════════════════════════════════
+// SCREEN TRANSITION HELPER
+// ═══════════════════════════════════════════════
+function showScreen(el) {
+  // Find all currently visible screens and fade them out
+  document.querySelectorAll('.screen:not(.hidden)').forEach(s => {
+    s.classList.add('fading-out');
+    setTimeout(() => {
+      s.classList.add('hidden');
+      s.classList.remove('fading-out');
+    }, 220);
+  });
+  setTimeout(() => {
+    el.classList.remove('hidden');
+    el.classList.add('fading-in');
+    setTimeout(() => el.classList.remove('fading-in'), 260);
+  }, 180);
+}
+
+function goToMenu() {
+  gameRunning = false;
+  confRunning = false;
+  clearInterval(timerInterval);
+  stopRollHum();
+  $calibOv.classList.add('hidden');
+  playMenuTap();
+  showScreen($start);
+}
+
+// ═══════════════════════════════════════════════
+// LEVEL TITLE CARD
+// ═══════════════════════════════════════════════
+const $ltCard = document.getElementById('level-title-card');
+const $ltcNum = document.getElementById('ltcNum');
+const $ltcName = document.getElementById('ltcName');
+
+function showLevelTitleCard(levelIndex, lvl) {
+  $ltcNum.textContent  = `Level ${levelIndex + 1}`;
+  $ltcName.textContent = lvl.name;
+  $ltCard.classList.remove('show');
+  void $ltCard.offsetWidth; // force reflow
+  $ltCard.classList.add('show');
+  setTimeout(() => $ltCard.classList.remove('show'), 1600);
+}
+
+// ═══════════════════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════════════════
+const SAVE_KEY = 'tiltmaze_save_v1';
+
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { bestLevel: 0, sensitivity: 5, offsetX: 0, offsetY: 0, unlockedBorder: false };
+}
+
+function writeSave(data) {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+let saveData = loadSave();
+
+// ═══════════════════════════════════════════════
+// CALIBRATION STATE
+// ═══════════════════════════════════════════════
+let sensitivity = saveData.sensitivity ?? 5;
+let tiltOffsetX = saveData.offsetX    ?? 0;
+let tiltOffsetY = saveData.offsetY    ?? 0;
+let isCalibMode = false;
+
+// Last raw accel reading (used for zeroing)
+let rawAccelX = 0, rawAccelY = 0;
+
+function sensitivityToScale(s) {
+  // maps 1-13 → 0.06 - 1.10 (~30% higher max than before)
+  return 0.06 + (s - 1) / 12 * 1.04;
+}
+
+// ═══════════════════════════════════════════════
+// LEVEL DATA
+// 0=open  1=wall  2=ice  3=mud  4=teleport  5=bouncy  6=moving-wall
+// teleporters: pairs defined in level.teleporters [[col,row],[col,row]]
+// warpPair: maps "col,row" → pair index for color-coded rendering
+// movers: defined in level.movers [{col,row,axis,min,max,speed}]
+// hasBorder: false means out-of-bounds = reset to start
+// ═══════════════════════════════════════════════
+const CALIB_LEVEL = {
+  name: 'Calibration',
+  cols: 9, rows: 13,
+  start: [1, 1],
+  goal:  [4, 6],
+  isCalib: true,
+  grid: [
+    [1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1],
+  ]
+};
+
+const LEVELS = [
+  // ── L1: Wake Up (has border) ───────────────────────────────────
+  {
+    name: 'Wake Up',
+    cols: 9, rows: 13,
+    start: [1, 1],
+    goal:  [7, 11],
+    hasBorder: true,
+    grid: [
+      [1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,0,0,1],
+      [1,0,1,1,1,1,1,0,1],
+      [1,0,1,0,0,0,1,0,1],
+      [1,0,1,0,1,0,1,0,1],
+      [1,0,1,0,1,0,0,0,1],
+      [1,0,1,0,1,1,1,1,1],
+      [1,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,0,1,0,1],
+      [1,0,0,0,0,0,1,0,1],
+      [1,0,1,1,1,1,1,0,1],
+      [1,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1],
+    ]
+  },
+
+  // ── L2: Ice Rink ────────────────────────────────────────────
+  {
+    name: 'Ice Rink',
+    cols: 9, rows: 11,
+    start: [1, 1],
+    goal:  [7, 9],
+    hasBorder: false,
+    grid: [
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,0,1,1,0,0],
+      [0,2,2,2,2,2,2,2,0],
+      [0,2,1,1,2,1,1,2,0],
+      [0,2,2,2,2,2,2,2,0],
+      [0,0,1,0,0,0,1,0,0],
+      [0,2,2,2,2,2,2,2,0],
+      [0,2,1,2,1,2,1,2,0],
+      [0,2,2,2,2,2,2,2,0],
+      [0,0,1,0,0,0,0,0,0],
+    ]
+  },
+
+  // ── L3: Mud Pits ────────────────────────────────────────────
+  {
+    name: 'Mud Pits',
+    cols: 9, rows: 13,
+    start: [1, 1],
+    goal:  [7, 11],
+    hasBorder: false,
+    grid: [
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,1,3,3,3,1,0,0],
+      [0,0,1,3,1,3,1,0,0],
+      [0,0,0,3,1,3,0,0,0],
+      [0,1,1,3,3,3,1,1,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,1,1,1,0,0],
+      [0,0,1,3,3,3,1,0,0],
+      [0,0,1,3,1,3,1,0,0],
+      [0,0,1,3,3,3,1,0,0],
+      [0,0,1,1,1,1,0,0,0],
+      [0,0,0,0,0,0,0,0,0],
+    ]
+  },
+
+  // ── L4: Warp Zone ───────────────────────────────────────────
+  {
+    name: 'Warp Zone',
+    cols: 9, rows: 13,
+    start: [1, 1],
+    goal:  [7, 11],
+    hasBorder: false,
+    teleporters: [
+      [[2, 3], [6, 9]],
+      [[6, 3], [2, 9]],
+    ],
+    warpColors: { '2,3': 0, '6,9': 0, '6,3': 1, '2,9': 1 },
+    grid: [
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,1,0,1,1,0],
+      [0,0,1,4,1,0,1,4,0],
+      [0,0,1,1,1,0,1,1,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,1,1,0,1,0,1,1,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,1,0,1,1,0],
+      [0,0,1,4,1,0,1,4,0],
+      [0,0,1,1,1,0,1,1,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0],
+    ]
+  },
+
+  // ── L5: Bouncy Castle ───────────────────────────────────────
+  {
+    name: 'Bouncy Castle',
+    cols: 9, rows: 13,
+    start: [1, 1],
+    goal:  [7, 11],
+    hasBorder: false,
+    grid: [
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,5,5,1,0,1,5,0],
+      [0,0,5,0,0,0,0,0,0],
+      [0,0,1,0,1,1,1,0,0],
+      [0,0,0,0,1,0,1,0,0],
+      [0,5,0,0,1,0,1,0,5],
+      [0,5,0,0,0,0,0,0,5],
+      [0,0,0,1,1,0,1,1,0],
+      [0,0,0,5,0,0,0,5,0],
+      [0,0,1,5,1,0,1,5,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0],
+    ]
+  },
+
+  // ── L6: Moving Walls ────────────────────────────────────────
+  {
+    name: 'Moving Walls',
+    cols: 9, rows: 13,
+    start: [1, 1],
+    goal:  [7, 11],
+    hasBorder: false,
+    movers: [
+      { col:4, row:3, axis:'x', min:2, max:6, speed:0.012 },
+      { col:6, row:7, axis:'y', min:4, max:10, speed:0.018 },
+      { col:3, row:9, axis:'x', min:2, max:5, speed:0.015 },
+    ],
+    grid: [
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,1,1,0,0,0,1,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,1,0,0,0,0,1,0],
+      [0,0,1,0,1,0,1,0,0],
+      [0,0,1,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,0,1,0,0,1,0,0,0],
+      [0,0,1,0,0,0,0,1,0],
+      [0,0,0,0,0,0,0,0,0],
+      [0,1,1,0,1,1,1,0,0],
+      [0,0,0,0,0,0,0,0,0],
+    ]
+  },
+
+  // ── L7: Slippery Pipes ──────────────────────────────────────
+  {
+    name: 'Slippery Pipes',
+    cols: 11, rows: 15,
+    start: [1, 1],
+    goal:  [9, 13],
+    hasBorder: false,
+    grid: [
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,2,2,2,2,2,2,1,0],
+      [0,0,1,2,1,1,1,1,2,1,0],
+      [0,0,1,2,1,3,3,3,1,2,0],
+      [0,0,1,2,1,3,0,3,1,2,0],
+      [0,0,1,2,1,3,3,3,1,2,0],
+      [0,0,1,2,1,1,0,1,1,2,0],
+      [0,0,1,2,2,2,0,2,2,2,0],
+      [0,0,1,1,1,1,0,1,1,1,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,3,1,2,2,2,1,3,0],
+      [0,0,1,3,1,2,1,2,1,3,0],
+      [0,0,1,3,3,2,0,2,3,3,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+    ]
+  },
+
+  // ── L8: Total Chaos ─────────────────────────────────────────
+  {
+    name: 'Total Chaos',
+    cols: 11, rows: 15,
+    start: [1, 1],
+    goal:  [9, 13],
+    hasBorder: false,
+    teleporters: [
+      [[3, 4], [7, 10]],
+      [[7, 4], [3, 10]],
+    ],
+    warpColors: { '3,4': 0, '7,10': 0, '7,4': 1, '3,10': 1 },
+    movers: [
+      { col:5, row:2, axis:'y', min:2, max:8, speed:0.020 },
+      { col:5, row:8, axis:'x', min:3, max:7, speed:0.016 },
+    ],
+    grid: [
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,5,5,2,2,2,2,5,5,0],
+      [0,0,5,0,2,1,1,2,0,5,0],
+      [0,0,1,4,1,0,0,0,1,4,0],
+      [0,0,0,0,0,0,1,0,0,0,0],
+      [0,3,3,3,1,0,0,0,1,3,0],
+      [0,3,0,3,0,0,0,0,0,3,0],
+      [0,3,3,3,1,0,1,0,1,3,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,5,0,0,2,2,2,0,0,0],
+      [0,0,5,0,1,2,1,2,1,0,0],
+      [0,0,1,4,1,0,0,0,1,4,0],
+      [0,0,0,0,0,0,1,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+    ]
+  },
+
+  // ── L9: The Gauntlet ────────────────────────────────────────
+  {
+    name: 'The Gauntlet',
+    cols: 11, rows: 17,
+    start: [1, 1],
+    goal:  [9, 15],
+    hasBorder: false,
+    teleporters: [
+      [[4, 5], [6, 11]],
+      [[6, 5], [4, 11]],
+    ],
+    warpColors: { '4,5': 0, '6,11': 0, '6,5': 1, '4,11': 1 },
+    movers: [
+      { col:3, row:3, axis:'x', min:2, max:8, speed:0.022 },
+      { col:5, row:9, axis:'y', min:7,  max:13, speed:0.025 },
+      { col:7, row:13, axis:'x', min:2, max:8, speed:0.020 },
+    ],
+    grid: [
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,2,2,2,2,2,2,1,0],
+      [0,0,1,2,1,2,1,2,1,1,0],
+      [0,0,1,2,2,2,2,2,2,1,0],
+      [0,0,0,0,0,4,0,4,0,0,0],
+      [0,5,5,1,0,1,0,1,0,1,0],
+      [0,5,0,0,0,0,0,0,0,0,5],
+      [0,5,5,1,0,1,1,1,0,1,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,1,3,3,3,0,3,3,1,0],
+      [0,0,1,3,1,3,0,3,1,1,0],
+      [0,0,1,3,3,3,0,3,3,1,0],
+      [0,0,0,0,0,4,0,4,0,0,0],
+      [0,0,1,1,0,1,0,1,0,1,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0],
+    ]
+  },
+];
+
+function getActiveLevel() {
+  return isCalibMode ? CALIB_LEVEL : LEVELS[currentLevel % LEVELS.length];
+}
+
+// ═══════════════════════════════════════════════
+// PHYSICS CONSTANTS
+// ═══════════════════════════════════════════════
+const FRICTION        = 0.82;
+const FRICTION_ICE    = 0.975;  // barely slows down
+const FRICTION_MUD    = 0.60;   // gloopy
+const MAX_SPEED       = 8;
+const BOUNCE_REST     = 1.6;    // bouncy wall restitution multiplier
+const TELEPORT_COOLDOWN = 60;   // frames before can re-teleport
+
+// ═══════════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════════
+let currentLevel   = 0;
+let gameRunning    = false;
+let tiltX = 0, tiltY = 0;
+let ball = { x:0, y:0, vx:0, vy:0, r:0 };
+let cellSize = 0;
+let levelStartTime = 0;
+let timerInterval  = null;
+let teleportCooldown = 0;  // frames
+let moverStates    = [];   // live position state for moving walls
+let teleportFlash  = 0;    // visual flash counter
+let ballOnIce      = false;
+let ballOnMud      = false;
+let resetCooldown   = 0;   // frames after reset before tilt applies
+
+// ═══════════════════════════════════════════════
+// DOM REFS
+// ═══════════════════════════════════════════════
+const canvas      = document.getElementById('gameCanvas');
+const ctx         = canvas.getContext('2d');
+const $start      = document.getElementById('screen-start');
+const $game       = document.getElementById('screen-game');
+const $win        = document.getElementById('screen-win');
+const $hudLvl     = document.getElementById('hudLevel');
+const $hudBest    = document.getElementById('hudBest');
+const $hudTime    = document.getElementById('hudTime');
+const $winLbl     = document.getElementById('winLevelLabel');
+const $winBest    = document.getElementById('winBestNum');
+const $winTimeEl  = document.getElementById('winTime');
+const $saveInf    = document.getElementById('saveInfo');
+const $calibOv    = document.getElementById('calib-overlay');
+const $sensSlider = document.getElementById('sensSlider');
+const $sensVal    = document.getElementById('sensVal');
+const $zeroBtn    = document.getElementById('zeroBtn');
+const $zeroStatus = document.getElementById('zeroStatus');
+const $lockBtn    = document.getElementById('lockBtn');
+const $restartBtn = document.getElementById('restartBtn');
+const $menuBtn    = document.getElementById('menuBtn');
+
+// Init slider from saved value
+$sensSlider.value    = sensitivity;
+$sensVal.textContent = sensitivity;
+
+if (saveData.bestLevel > 0) {
+  $saveInf.textContent = `Best level: ${saveData.bestLevel}`;
+  document.getElementById('continueBtn').classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════
+// TILT INPUT
+// ═══════════════════════════════════════════════
+function handleMotion(e) {
+  const a = e.accelerationIncludingGravity || e.acceleration;
+  if (!a) return;
+
+  const isAndroid = /android/i.test(navigator.userAgent);
+  rawAccelX = isAndroid ? -(a.x || 0) : (a.x || 0);
+  rawAccelY = -(a.y || 0);
+
+  const ax = rawAccelX - tiltOffsetX;
+  const ay = rawAccelY - tiltOffsetY;
+  const scale = sensitivityToScale(sensitivity);
+  tiltX = ax * scale;
+  tiltY = ay * scale;
+}
+
+function requestTiltPermission() {
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission()
+      .then(state => {
+        if (state === 'granted') window.addEventListener('devicemotion', handleMotion);
+      }).catch(() => {});
+  } else {
+    window.addEventListener('devicemotion', handleMotion);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// KEYBOARD FALLBACK
+// ═══════════════════════════════════════════════
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.key] = true; });
+window.addEventListener('keyup',   e => { keys[e.key] = false; });
+
+function applyKeyboardTilt() {
+  const KS = 0.5;
+  if (keys['ArrowLeft'])  tiltX -= KS;
+  if (keys['ArrowRight']) tiltX += KS;
+  if (keys['ArrowUp'])    tiltY -= KS;
+  if (keys['ArrowDown'])  tiltY += KS;
+}
+
+// ═══════════════════════════════════════════════
+// CALIBRATION CONTROLS
+// ═══════════════════════════════════════════════
+$sensSlider.addEventListener('input', () => {
+  sensitivity = parseInt($sensSlider.value);
+  $sensVal.textContent = sensitivity;
+  saveData.sensitivity = sensitivity;
+  writeSave(saveData);
+});
+
+$zeroBtn.addEventListener('click', () => {
+  tiltOffsetX = rawAccelX;
+  tiltOffsetY = rawAccelY;
+  saveData.offsetX = tiltOffsetX;
+  saveData.offsetY = tiltOffsetY;
+  writeSave(saveData);
+
+  // Stop ball dead so they can see drift is gone
+  ball.vx = 0; ball.vy = 0;
+  tiltX = 0;   tiltY = 0;
+
+  $zeroStatus.textContent = '✓ Zeroed!';
+  $zeroStatus.style.opacity = '1';
+  setTimeout(() => { $zeroStatus.style.opacity = '0'; }, 2000);
+});
+
+$lockBtn.addEventListener('click', () => {
+  saveData.sensitivity = sensitivity;
+  saveData.offsetX     = tiltOffsetX;
+  saveData.offsetY     = tiltOffsetY;
+  writeSave(saveData);
+  gameRunning = false;
+  clearInterval(timerInterval);
+  isCalibMode = false;
+  goToMenu();
+});
+
+// ═══════════════════════════════════════════════
+// LEVEL SETUP
+// ═══════════════════════════════════════════════
+function setupLevel(lvl, calibMode) {
+  isCalibMode = !!calibMode;
+  const wrap = document.getElementById('canvas-wrap');
+  cellSize = Math.floor(Math.min(wrap.clientWidth / lvl.cols, wrap.clientHeight / lvl.rows));
+  canvas.width  = cellSize * lvl.cols;
+  canvas.height = cellSize * lvl.rows;
+
+  ball.r  = cellSize * 0.3;
+  ball.x  = lvl.start[0] * cellSize + cellSize / 2;
+  ball.y  = lvl.start[1] * cellSize + cellSize / 2;
+  ball.vx = 0; ball.vy = 0;
+  tiltX = 0;   tiltY = 0;
+  teleportCooldown = 0;
+  teleportFlash = 0;
+  ballOnIce = false;
+  ballOnMud = false;
+  resetCooldown = 0;
+
+  // Init mover states — each mover gets a phase (0..1)
+  moverStates = (lvl.movers || []).map((m, i) => ({
+    ...m,
+    phase: i * 0.33, // stagger so they don't all sync up
+    // current pixel position (center of the moving wall)
+    cx: m.col * cellSize + cellSize / 2,
+    cy: m.row * cellSize + cellSize / 2,
+  }));
+
+  // Build obstacle legend
+  const legendEl = document.getElementById('obstacle-legend');
+  legendEl.innerHTML = '';
+  if (!calibMode) {
+    const hasIce    = lvl.grid.some(r => r.includes(2));
+    const hasMud    = lvl.grid.some(r => r.includes(3));
+    const hasWarp   = lvl.grid.some(r => r.includes(4));
+    const hasBouncy = lvl.grid.some(r => r.includes(5));
+    const hasMover  = (lvl.movers || []).length > 0;
+    if (hasIce)    legendEl.innerHTML += '<span class="legend-pill legend-ice">❄ Ice</span>';
+    if (hasMud)    legendEl.innerHTML += '<span class="legend-pill legend-mud">🟤 Mud</span>';
+    if (hasWarp)   legendEl.innerHTML += '<span class="legend-pill legend-warp">⚡ Warp: ● ●</span>';
+    if (hasBouncy) legendEl.innerHTML += '<span class="legend-pill legend-bouncy">💥 Bouncy</span>';
+    if (hasMover)  legendEl.innerHTML += '<span class="legend-pill legend-mover">🔄 Moving</span>';
+  }
+
+  if (calibMode) {
+    $hudLvl.textContent  = '—';
+    $hudBest.textContent = '—';
+    $hudTime.textContent = '—';
+    clearInterval(timerInterval);
+    $sensSlider.value    = sensitivity;
+    $sensVal.textContent = sensitivity;
+    $zeroStatus.textContent = '';
+    $zeroStatus.style.opacity = '0';
+    $calibOv.classList.remove('hidden');
+  } else {
+    $hudLvl.textContent  = currentLevel + 1;
+    $hudBest.textContent = saveData.bestLevel > 0 ? saveData.bestLevel : '—';
+    levelStartTime = Date.now();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimer, 500);
+    $calibOv.classList.add('hidden');
+  }
+}
+
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - levelStartTime) / 1000);
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  $hudTime.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// ═══════════════════════════════════════════════
+// MOVER UPDATE — must run before collision
+// ═══════════════════════════════════════════════
+function updateMovers() {
+  const cs = cellSize;
+  for (const m of moverStates) {
+    m.phase = (m.phase + m.speed) % 1;
+    const t = 0.5 - 0.5 * Math.cos(m.phase * Math.PI * 2);
+    if (m.axis === 'x') {
+      m.cx = (m.min + t * (m.max - m.min)) * cs + cs / 2;
+      m.cy = m.row * cs + cs / 2;
+    } else {
+      m.cx = m.col * cs + cs / 2;
+      m.cy = (m.min + t * (m.max - m.min)) * cs + cs / 2;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// COLLISION — handles wall, bouncy, mover blocks
+// ═══════════════════════════════════════════════
+function collideBall() {
+  const lvl = getActiveLevel();
+  const r   = ball.r;
+  const cs  = cellSize;
+
+  ballOnIce = false;
+  ballOnMud = false;
+
+  // ── Out-of-bounds: reset to start (no border levels) ───────
+  // Only triggers when more than half the ball is past the edge
+  if (!lvl.hasBorder) {
+    const halfPastLeft  = ball.x - ball.r / 2 < 0;
+    const halfPastRight  = ball.x + ball.r / 2 > lvl.cols * cs;
+    const halfPastTop    = ball.y - ball.r / 2 < 0;
+    const halfPastBot   = ball.y + ball.r / 2 > lvl.rows * cs;
+    if (halfPastLeft || halfPastRight || halfPastTop || halfPastBot) {
+      ball.x = lvl.start[0] * cs + cs / 2;
+      ball.y = lvl.start[1] * cs + cs / 2;
+      ball.vx = 0; ball.vy = 0;
+      tiltX = 0; tiltY = 0;
+      resetCooldown = 15;
+      playReset();
+      return;
+    }
+  }
+
+  // Clamp to canvas (border levels)
+  ball.x = Math.max(r, Math.min(lvl.cols * cs - r, ball.x));
+  ball.y = Math.max(r, Math.min(lvl.rows * cs - r, ball.y));
+
+  // ── Teleport check ───────────────────────────
+  if (teleportCooldown > 0) teleportCooldown--;
+  if (teleportCooldown === 0 && (lvl.teleporters || []).length) {
+    const ballCol = Math.floor(ball.x / cs);
+    const ballRow = Math.floor(ball.y / cs);
+    for (const pair of lvl.teleporters) {
+      const [a, b] = pair;
+      let dest = null;
+      if (ballCol === a[0] && ballRow === a[1]) dest = b;
+      else if (ballCol === b[0] && ballRow === b[1]) dest = a;
+      if (dest) {
+        ball.x = dest[0] * cs + cs / 2;
+        ball.y = dest[1] * cs + cs / 2;
+        // Slightly scatter velocity for fun
+        const spd = Math.hypot(ball.vx, ball.vy);
+        const ang = Math.atan2(ball.vy, ball.vx) + (Math.random() - 0.5) * 0.8;
+        ball.vx = Math.cos(ang) * spd;
+        ball.vy = Math.sin(ang) * spd;
+        teleportCooldown = TELEPORT_COOLDOWN;
+        teleportFlash = 18;
+        playWarp();
+        break;
+      }
+    }
+  }
+
+  // ── Floor type detection for current cell ────
+  const bcol = Math.floor(ball.x / cs);
+  const brow = Math.floor(ball.y / cs);
+  if (brow >= 0 && brow < lvl.rows && bcol >= 0 && bcol < lvl.cols) {
+    const cell = lvl.grid[brow][bcol];
+    if (cell === 2) ballOnIce = true;
+    if (cell === 3) ballOnMud = true;
+  }
+
+  // ── Static wall collision (3 passes) ─────────
+  for (let pass = 0; pass < 3; pass++) {
+    const colMin = Math.max(0, Math.floor((ball.x - r) / cs));
+    const colMax = Math.min(lvl.cols - 1, Math.floor((ball.x + r) / cs));
+    const rowMin = Math.max(0, Math.floor((ball.y - r) / cs));
+    const rowMax = Math.min(lvl.rows - 1, Math.floor((ball.y + r) / cs));
+
+    for (let row = rowMin; row <= rowMax; row++) {
+      for (let col = colMin; col <= colMax; col++) {
+        const cell = lvl.grid[row][col];
+        if (cell !== 1 && cell !== 5) continue; // only solid cells
+
+        const wL = col * cs, wR = wL + cs;
+        const wT = row * cs, wB = wT + cs;
+
+        const nearX = Math.max(wL, Math.min(wR, ball.x));
+        const nearY = Math.max(wT, Math.min(wB, ball.y));
+        const dx = ball.x - nearX;
+        const dy = ball.y - nearY;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist === 0 || dist >= r) continue;
+
+        const pen = r - dist;
+        const isBouncy = cell === 5;
+        const rest = isBouncy ? BOUNCE_REST : 1.05;
+        const damp = isBouncy ? 0.98 : 0.75;
+
+        if (dist > 0) {
+          const nx = dx / dist, ny = dy / dist;
+          ball.x += nx * (pen + 0.5);
+          ball.y += ny * (pen + 0.5);
+          const dot = ball.vx * nx + ball.vy * ny;
+          if (dot < 0) {
+            ball.vx -= dot * nx * rest;
+            ball.vy -= dot * ny * rest;
+            ball.vx *= damp;
+            ball.vy *= damp;
+            if (Math.abs(dot) > 1.5) playBonk(Math.abs(dot));
+          }
+        } else {
+          const overlapL = ball.x - wL, overlapR = wR - ball.x;
+          const overlapT = ball.y - wT, overlapB = wB - ball.y;
+          const minO = Math.min(overlapL, overlapR, overlapT, overlapB);
+          const damp2 = isBouncy ? 1.1 : 0.5;
+          if (minO === overlapL) { ball.x = wL - r - 0.5; ball.vx =  Math.abs(ball.vx) * damp2; }
+          else if (minO === overlapR) { ball.x = wR + r + 0.5; ball.vx = -Math.abs(ball.vx) * damp2; }
+          else if (minO === overlapT) { ball.y = wT - r - 0.5; ball.vy =  Math.abs(ball.vy) * damp2; }
+          else { ball.y = wB + r + 0.5; ball.vy = -Math.abs(ball.vy) * damp2; }
+        }
+      }
+    }
+
+    // ── Moving wall collision ──────────────────
+    for (const m of moverStates) {
+      const wL = m.cx - cs / 2, wR = m.cx + cs / 2;
+      const wT = m.cy - cs / 2, wB = m.cy + cs / 2;
+      const nearX = Math.max(wL, Math.min(wR, ball.x));
+      const nearY = Math.max(wT, Math.min(wB, ball.y));
+      const dx = ball.x - nearX, dy = ball.y - nearY;
+      const dist = Math.hypot(dx, dy);
+      if (dist === 0 || dist >= r) continue;
+      const pen = r - dist;
+      if (dist > 0) {
+        const nx = dx / dist, ny = dy / dist;
+        ball.x += nx * (pen + 0.5);
+        ball.y += ny * (pen + 0.5);
+        const dot = ball.vx * nx + ball.vy * ny;
+        if (dot < 0) { ball.vx -= dot * nx * 1.1; ball.vy -= dot * ny * 1.1; }
+        ball.vx *= 0.8; ball.vy *= 0.8;
+      }
+    }
+
+    // Re-clamp
+    ball.x = Math.max(r, Math.min(lvl.cols * cs - r, ball.x));
+    ball.y = Math.max(r, Math.min(lvl.rows * cs - r, ball.y));
+  }
+}
+
+// ═══════════════════════════════════════════════
+// WIN CHECK
+// ═══════════════════════════════════════════════
+function checkWin() {
+  if (isCalibMode) return false;
+  const lvl = getActiveLevel();
+  const gx  = lvl.goal[0] * cellSize + cellSize / 2;
+  const gy  = lvl.goal[1] * cellSize + cellSize / 2;
+  return Math.hypot(ball.x - gx, ball.y - gy) < cellSize * 0.45;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+let goalPulse    = 0;
+let ballRotation = 0;
+
+function drawFrame() {
+  const lvl = getActiveLevel();
+  const cs  = cellSize;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#0d0d0f';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  goalPulse = (goalPulse + 0.06) % (Math.PI * 2);
+  const glow = 0.55 + 0.45 * Math.sin(goalPulse);
+
+  // ── Teleport pulse animation ─────────────────
+  const tpPulse = (goalPulse * 1.7) % (Math.PI * 2);
+
+  // ── Cells ────────────────────────────────────
+  for (let row = 0; row < lvl.rows; row++) {
+    for (let col = 0; col < lvl.cols; col++) {
+      const x = col * cs, y = row * cs;
+      const cell = lvl.grid[row][col];
+
+      if (cell === 1) {
+        // Standard wall
+        ctx.fillStyle = '#1e1e28'; ctx.fillRect(x, y, cs, cs);
+        ctx.fillStyle = '#2a2a38'; ctx.fillRect(x+1, y+1, cs-2, cs-2);
+        ctx.fillStyle = '#3a3a50';
+        ctx.fillRect(x+1, y+1, cs-2, 3);
+        ctx.fillRect(x+1, y+1, 3, cs-2);
+
+      } else if (cell === 2) {
+        // Ice — pale blue sheen
+        ctx.fillStyle = '#0e1820'; ctx.fillRect(x, y, cs, cs);
+        ctx.fillStyle = 'rgba(168,216,240,0.12)'; ctx.fillRect(x, y, cs, cs);
+        // Sparkle lines
+        ctx.strokeStyle = 'rgba(200,235,255,0.25)'; ctx.lineWidth = 0.5;
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath(); ctx.moveTo(x+2, y+cs*0.3); ctx.lineTo(x+cs-2, y+cs*0.3); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+cs*0.3, y+2); ctx.lineTo(x+cs*0.3, y+cs-2); ctx.stroke();
+        ctx.setLineDash([]);
+        // Faint shimmer
+        ctx.fillStyle = 'rgba(168,216,240,0.06)'; ctx.fillRect(x, y, cs, 2);
+
+      } else if (cell === 3) {
+        // Mud — brown lumpy texture
+        ctx.fillStyle = '#1a1208'; ctx.fillRect(x, y, cs, cs);
+        ctx.fillStyle = '#3a2810'; ctx.fillRect(x+2, y+2, cs-4, cs-4);
+        // Bubbles
+        const bubbles = [[0.2,0.3,2.5],[0.6,0.6,1.8],[0.75,0.25,1.5],[0.4,0.7,2]];
+        for (const [bx,by,br] of bubbles) {
+          ctx.beginPath(); ctx.arc(x+bx*cs, y+by*cs, br, 0, Math.PI*2);
+          ctx.fillStyle = '#5a3a18'; ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(90,60,20,0.4)'; ctx.fillRect(x, y+cs-3, cs, 3);
+
+      } else if (cell === 4) {
+        // Teleport portal — color-coded by pair
+        const key = `${col},${row}`;
+        const pairIdx = lvl.warpColors ? (lvl.warpColors[key] ?? -1) : -1;
+        // Pair 0 = cyan, Pair 1 = magenta, default = purple
+        const colors = pairIdx === 0
+          ? { bg: '#081018', ring: '0,200,240', stroke: '100,240,255' }
+          : pairIdx === 1
+          ? { bg: '#180810', ring: '240,64,160', stroke: '255,120,200' }
+          : { bg: '#100818', ring: '192,64,240', stroke: '220,120,255' };
+        ctx.fillStyle = colors.bg; ctx.fillRect(x, y, cs, cs);
+        const pr = cs * 0.38;
+        const pcx = x + cs/2, pcy = y + cs/2;
+        for (let ring = 3; ring > 0; ring--) {
+          const alpha = (0.15 + 0.1*Math.sin(tpPulse + ring)) * (4-ring) * 0.3;
+          ctx.beginPath(); ctx.arc(pcx, pcy, pr * ring / 3, 0, Math.PI*2);
+          ctx.fillStyle = `rgba(${colors.ring},${alpha})`; ctx.fill();
+        }
+        ctx.save(); ctx.translate(pcx, pcy); ctx.rotate(tpPulse * 0.8);
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = (i/6)*Math.PI*2;
+          const rad = i%2===0 ? pr : pr*0.45;
+          i===0 ? ctx.moveTo(Math.cos(a)*rad, Math.sin(a)*rad)
+                : ctx.lineTo(Math.cos(a)*rad, Math.sin(a)*rad);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = `rgba(${colors.stroke},${0.6+0.4*Math.sin(tpPulse)})`;
+        ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+        // Center dot
+        ctx.beginPath(); ctx.arc(pcx, pcy, 3, 0, Math.PI*2);
+        ctx.fillStyle = `rgb(${pairIdx===0?'100,240,255':pairIdx===1?'255,140,200':'224,144,255'})`; ctx.fill();
+
+      } else if (cell === 5) {
+        // Bouncy — red/orange ribbed wall
+        ctx.fillStyle = '#200810'; ctx.fillRect(x, y, cs, cs);
+        ctx.fillStyle = '#400818'; ctx.fillRect(x+1, y+1, cs-2, cs-2);
+        // Ribs
+        const ribCount = 4;
+        for (let i = 0; i < ribCount; i++) {
+          const ry = y + 2 + i * ((cs-4) / ribCount);
+          ctx.fillStyle = i%2===0 ? 'rgba(240,64,96,0.5)' : 'rgba(240,64,96,0.2)';
+          ctx.fillRect(x+2, ry, cs-4, (cs-4)/ribCount - 1);
+        }
+        ctx.fillStyle = 'rgba(255,100,120,0.3)'; ctx.fillRect(x+1, y+1, cs-2, 3);
+
+      } else {
+        // Open floor
+        ctx.fillStyle = '#12121a'; ctx.fillRect(x, y, cs, cs);
+        ctx.strokeStyle = '#1a1a24'; ctx.lineWidth = 0.5;
+        ctx.strokeRect(x+0.25, y+0.25, cs-0.5, cs-0.5);
+      }
+    }
+  }
+
+  // ── Moving walls ─────────────────────────────
+  for (const m of moverStates) {
+    const x = m.cx - cs/2, y = m.cy - cs/2;
+    ctx.fillStyle = '#2a1500'; ctx.fillRect(x, y, cs, cs);
+    ctx.fillStyle = '#5a2a00'; ctx.fillRect(x+1, y+1, cs-2, cs-2);
+    // Chevron stripe
+    const stripeCount = 4;
+    for (let i = 0; i < stripeCount; i++) {
+      const t2 = i / stripeCount;
+      ctx.fillStyle = i%2===0 ? 'rgba(240,128,32,0.55)' : 'rgba(240,128,32,0.15)';
+      ctx.fillRect(x+2, y+2 + t2*(cs-4), cs-4, (cs-4)/stripeCount - 1);
+    }
+    ctx.fillStyle = 'rgba(255,160,60,0.4)'; ctx.fillRect(x+1, y+1, cs-2, 3);
+    // Direction arrows
+    ctx.fillStyle = 'rgba(255,180,80,0.7)';
+    ctx.font = `${Math.floor(cs*0.4)}px monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(m.axis === 'x' ? '↔' : '↕', m.cx, m.cy);
+  }
+
+  // ── Calibration rings ────────────────────────
+  if (isCalibMode) {
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    for (let ring = 1; ring <= 3; ring++) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, cs * ring * 1.1, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(112,112,160,${0.08 - ring * 0.015})`;
+      ctx.lineWidth = 1; ctx.setLineDash([4, 6]); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+
+  // ── Goal ─────────────────────────────────────
+  const gx = lvl.goal[0] * cs + cs/2;
+  const gy = lvl.goal[1] * cs + cs/2;
+  const gr = cs * 0.36;
+
+  for (let i = 3; i > 0; i--) {
+    ctx.beginPath(); ctx.arc(gx, gy, gr + i * cs * 0.1 * glow, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(64,224,160,${0.04 * glow * (4-i)})`; ctx.fill();
+  }
+  ctx.save(); ctx.translate(gx, gy); ctx.rotate(goalPulse * 0.5);
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const rad = i % 2 === 0 ? gr : gr * 0.5;
+    i === 0 ? ctx.moveTo(Math.cos(angle)*rad, Math.sin(angle)*rad)
+            : ctx.lineTo(Math.cos(angle)*rad, Math.sin(angle)*rad);
+  }
+  ctx.closePath();
+  ctx.fillStyle = isCalibMode
+    ? `rgba(64,224,160,${0.2 + 0.1*glow})`
+    : `rgba(64,224,160,${0.7 + 0.3*glow})`;
+  ctx.fill(); ctx.restore();
+
+  // ── Start marker ─────────────────────────────
+  const sx = lvl.start[0] * cs + cs/2;
+  const sy = lvl.start[1] * cs + cs/2;
+  ctx.beginPath(); ctx.arc(sx, sy, cs*0.2, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(120,120,160,0.25)'; ctx.fill();
+
+  // ── Teleport flash overlay ────────────────────
+  if (teleportFlash > 0) {
+    const alpha = (teleportFlash / 18) * 0.5;
+    ctx.fillStyle = `rgba(192,64,240,${alpha})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    teleportFlash--;
+  }
+
+  // ── Ball shadow ───────────────────────────────
+  ballRotation += (Math.abs(ball.vx) + Math.abs(ball.vy)) * 0.04;
+  const br = ball.r;
+  ctx.beginPath(); ctx.ellipse(ball.x + 2, ball.y + 4, br*0.9, br*0.5, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fill();
+
+  // ── Ball body (tinted by surface) ────────────
+  const ballTint = teleportFlash > 0 ? '#e090ff'
+    : ballOnIce ? '#c8eeff'
+    : ballOnMud ? '#c8a070'
+    : '#f0c040';
+  const ballDark = teleportFlash > 0 ? '#6000c0'
+    : ballOnIce ? '#3060a0'
+    : ballOnMud ? '#5a3010'
+    : '#8a5a00';
+
+  const grad = ctx.createRadialGradient(
+    ball.x - br*0.3, ball.y - br*0.3, br*0.05,
+    ball.x, ball.y, br
+  );
+  grad.addColorStop(0, '#fff8c0');
+  grad.addColorStop(0.3, ballTint);
+  grad.addColorStop(1, ballDark);
+  ctx.beginPath(); ctx.arc(ball.x, ball.y, br, 0, Math.PI*2);
+  ctx.fillStyle = grad; ctx.fill();
+
+  // ── Spin stripe ───────────────────────────────
+  ctx.save(); ctx.translate(ball.x, ball.y); ctx.rotate(ballRotation);
+  ctx.beginPath(); ctx.arc(0, 0, br, -0.4, 0.4);
+  ctx.strokeStyle = 'rgba(255,255,200,0.4)'; ctx.lineWidth = br * 0.35; ctx.stroke();
+  ctx.restore();
+
+  // ── Specular ──────────────────────────────────
+  ctx.beginPath(); ctx.arc(ball.x - br*0.32, ball.y - br*0.32, br*0.22, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,240,0.75)'; ctx.fill();
+
+  // ── Surface effect indicators ─────────────────
+  if (ballOnIce) {
+    // Draw little speed-lines behind ball
+    const speed = Math.hypot(ball.vx, ball.vy);
+    if (speed > 1) {
+      const ang = Math.atan2(ball.vy, ball.vx);
+      for (let i = 0; i < 3; i++) {
+        const spread = (i - 1) * 0.3;
+        ctx.save(); ctx.translate(ball.x, ball.y); ctx.rotate(ang + spread + Math.PI);
+        ctx.beginPath(); ctx.moveTo(br, 0); ctx.lineTo(br + speed * 2, 0);
+        ctx.strokeStyle = `rgba(168,216,240,${0.4 - i*0.1})`; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+  if (ballOnMud) {
+    // Mud splat drips
+    for (let i = 0; i < 3; i++) {
+      const a = Math.PI * 0.3 + i * 0.5;
+      ctx.beginPath(); ctx.arc(ball.x + Math.cos(a)*br*1.2, ball.y + Math.sin(a)*br*1.2, 2, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(122,92,56,0.6)'; ctx.fill();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// GAME LOOP
+// ═══════════════════════════════════════════════
+function gameLoop() {
+  if (!gameRunning) return;
+  requestAnimationFrame(gameLoop);
+
+  applyKeyboardTilt();
+
+  // Update moving walls before physics
+  updateMovers();
+
+  // Update reset cooldown
+  if (resetCooldown > 0) resetCooldown--;
+
+  // Apply friction based on surface under ball
+  const surfFriction = ballOnIce ? FRICTION_ICE : ballOnMud ? FRICTION_MUD : FRICTION;
+
+  // Ignore tilt input during cooldown after reset
+  const activeTiltX = resetCooldown > 0 ? 0 : tiltX;
+  const activeTiltY = resetCooldown > 0 ? 0 : tiltY;
+
+  ball.vx = (ball.vx + activeTiltX) * surfFriction;
+  ball.vy = (ball.vy + activeTiltY) * surfFriction;
+
+  const speed = Math.hypot(ball.vx, ball.vy);
+  if (speed > MAX_SPEED) {
+    ball.vx = ball.vx / speed * MAX_SPEED;
+    ball.vy = ball.vy / speed * MAX_SPEED;
+  }
+
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  collideBall();
+  drawFrame();
+
+  // Update rolling sound
+  updateRollHum(Math.hypot(ball.vx, ball.vy));
+
+  if (checkWin()) {
+    gameRunning = false;
+    clearInterval(timerInterval);
+    setTimeout(showWinScreen, 120);
+  }
+
+  if (!keys['ArrowLeft'] && !keys['ArrowRight']) tiltX *= 0.85;
+  if (!keys['ArrowUp']   && !keys['ArrowDown'])  tiltY *= 0.85;
+}
+
+// ═══════════════════════════════════════════════
+// WIN SCREEN
+// ═══════════════════════════════════════════════
+function showWinScreen() {
+  const done = currentLevel + 1;
+  const isNewBest = done > saveData.bestLevel;
+  if (isNewBest) {
+    saveData.bestLevel = done;
+    writeSave(saveData);
+    $saveInf.textContent = `Best level: ${saveData.bestLevel}`;
+    document.getElementById('continueBtn').classList.remove('hidden');
+  }
+  const lvl = LEVELS[(currentLevel) % LEVELS.length];
+  $winLbl.textContent  = `Level ${done} — "${lvl.name}" Complete!`;
+  $winBest.textContent = saveData.bestLevel;
+
+  // Random win phrase
+  const phrase = WIN_PHRASES[Math.floor(Math.random() * WIN_PHRASES.length)];
+  document.getElementById('winTitle').textContent = phrase;
+
+  // New best badge
+  const $newBest = document.getElementById('winNewBest');
+  $newBest.classList.toggle('show', isNewBest);
+
+  // Time display
+  const elapsed = Math.floor((Date.now() - levelStartTime) / 1000);
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  document.getElementById('winTime').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+
+  stopRollHum();
+  playWin();
+  showScreen($win);
+  startConfetti();
+}
+
+const confCanvas = document.getElementById('confetti');
+const confCtx    = confCanvas.getContext('2d');
+let confParts    = [];
+let confRunning  = false;
+
+function startConfetti() {
+  confCanvas.width  = window.innerWidth;
+  confCanvas.height = window.innerHeight;
+  confParts = [];
+  const colors = ['#f0c040','#40e0a0','#e040a0','#40a0e0','#e07040','#ffffff','#c040f0','#ff6060'];
+  const shapes = ['rect', 'circle', 'star', 'tri'];
+  for (let i = 0; i < 150; i++) {
+    confParts.push({
+      x: Math.random() * confCanvas.width,
+      y: -10 - Math.random() * 300,
+      vx: (Math.random()-0.5)*4, vy: 1.5+Math.random()*4,
+      r: 4+Math.random()*7,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      spin: Math.random()*Math.PI*2, spinV: (Math.random()-0.5)*0.25,
+      wobble: Math.random()*Math.PI*2, wobbleV: 0.05+Math.random()*0.05,
+      shape: shapes[Math.floor(Math.random()*shapes.length)],
+    });
+  }
+  confRunning = true;
+  animateConfetti();
+}
+
+function drawStar(ctx, x, y, r, spin) {
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a1 = spin + (i * Math.PI * 2) / 5 - Math.PI/2;
+    const a2 = spin + ((i + 0.5) * Math.PI * 2) / 5 - Math.PI/2;
+    const ox = x + Math.cos(a1) * r, oy = y + Math.sin(a1) * r;
+    const ix = x + Math.cos(a2) * r*0.45, iy = y + Math.sin(a2) * r*0.45;
+    if (i === 0) ctx.moveTo(ox, oy); else ctx.lineTo(ox, oy);
+    ctx.lineTo(ix, iy);
+  }
+  ctx.closePath();
+}
+
+function animateConfetti() {
+  if (!confRunning) return;
+  confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+  let alive = 0;
+  for (const p of confParts) {
+    p.x  += p.vx + Math.sin(p.wobble) * 0.8;
+    p.y  += p.vy;
+    p.spin   += p.spinV;
+    p.vy     += 0.05;
+    p.wobble += p.wobbleV;
+    if (p.y < confCanvas.height + 20) alive++;
+    confCtx.save();
+    confCtx.translate(p.x, p.y);
+    confCtx.rotate(p.spin);
+    confCtx.fillStyle = p.color;
+    if (p.shape === 'rect') {
+      confCtx.fillRect(-p.r, -p.r/2, p.r*2, p.r);
+    } else if (p.shape === 'circle') {
+      confCtx.beginPath(); confCtx.arc(0,0,p.r,0,Math.PI*2); confCtx.fill();
+    } else if (p.shape === 'star') {
+      drawStar(confCtx, 0, 0, p.r, 0);
+      confCtx.fill();
+    } else {
+      // triangle
+      confCtx.beginPath();
+      confCtx.moveTo(0, -p.r); confCtx.lineTo(p.r*0.87, p.r*0.5); confCtx.lineTo(-p.r*0.87, p.r*0.5);
+      confCtx.closePath(); confCtx.fill();
+    }
+    confCtx.restore();
+  }
+  if (alive > 0) requestAnimationFrame(animateConfetti);
+  else confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION HELPERS
+// ═══════════════════════════════════════════════
+function launchGame(calibMode) {
+  requestTiltPermission();
+  confRunning = false;
+
+  const lvl = calibMode ? CALIB_LEVEL : LEVELS[currentLevel % LEVELS.length];
+  showScreen($game);
+
+  setTimeout(() => {
+    setupLevel(lvl, calibMode);
+    gameRunning = true;
+    startRollHum();
+    requestAnimationFrame(gameLoop);
+    if (!calibMode) {
+      showLevelTitleCard(currentLevel, lvl);
+    }
+  }, 200);
+}
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  currentLevel = 0;
+  playMenuTap();
+  launchGame(false);
+});
+
+document.getElementById('continueBtn').addEventListener('click', () => {
+  // Resume from last beaten level (bestLevel is 1-indexed count of cleared levels)
+  currentLevel = Math.max(0, saveData.bestLevel - 1);
+  playMenuTap();
+  launchGame(false);
+});
+
+// ── Download Save ──────────────────────────────
+document.getElementById('downloadSaveBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'tiltmaze_save.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// ── Import Save ────────────────────────────────
+document.getElementById('importSaveBtn').addEventListener('click', () => {
+  document.getElementById('importFileInput').click();
+});
+
+document.getElementById('importFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      // Validate it looks like a tiltmaze save
+      if (typeof parsed.bestLevel !== 'number') throw new Error('Invalid save file');
+      // Merge in — preserve any new keys with defaults
+      saveData = {
+        bestLevel: parsed.bestLevel ?? 0,
+        sensitivity: parsed.sensitivity ?? 5,
+        offsetX: parsed.offsetX ?? 0,
+        offsetY: parsed.offsetY ?? 0,
+        unlockedBorder: parsed.unlockedBorder ?? false,
+      };
+      writeSave(saveData);
+      // Restore calibration state
+      sensitivity  = saveData.sensitivity;
+      tiltOffsetX  = saveData.offsetX;
+      tiltOffsetY  = saveData.offsetY;
+      $sensSlider.value    = sensitivity;
+      $sensVal.textContent = sensitivity;
+      // Refresh start screen UI
+      if (saveData.bestLevel > 0) {
+        $saveInf.textContent = `Best level: ${saveData.bestLevel}`;
+        document.getElementById('continueBtn').classList.remove('hidden');
+      } else {
+        $saveInf.textContent = 'Best level: —';
+        document.getElementById('continueBtn').classList.add('hidden');
+      }
+      const $flash = document.getElementById('importFlash');
+      $flash.textContent = `✓ Imported! Best level: ${saveData.bestLevel}`;
+      $flash.style.opacity = '1';
+      setTimeout(() => { $flash.style.opacity = '0'; }, 3000);
+    } catch (err) {
+      const $flash = document.getElementById('importFlash');
+      $flash.textContent = '✗ Invalid save file';
+      $flash.style.color = 'var(--bouncy)';
+      $flash.style.opacity = '1';
+      setTimeout(() => { $flash.style.opacity = '0'; $flash.style.color = 'var(--goal)'; }, 3000);
+    }
+    // Reset input so same file can be re-imported
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById('calibMenuBtn').addEventListener('click', () => {
+  playMenuTap();
+  launchGame(true);
+});
+
+$restartBtn.addEventListener('click', () => {
+  playMenuTap();
+  const lvl = getActiveLevel();
+  setupLevel(lvl, isCalibMode);
+  startRollHum();
+});
+
+$menuBtn.addEventListener('click', goToMenu);
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  confRunning = false;
+  currentLevel++;
+  playMenuTap();
+  launchGame(false);
+});
+
+document.getElementById('winMenuBtn').addEventListener('click', goToMenu);
+
+// ═══════════════════════════════════════════════
+// RESIZE
+// ═══════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  if (!$game.classList.contains('hidden')) {
+    const lvl = getActiveLevel();
+    const wrap = document.getElementById('canvas-wrap');
+    const oldCS = cellSize || 1;
+    cellSize = Math.floor(Math.min(wrap.clientWidth / lvl.cols, wrap.clientHeight / lvl.rows));
+    const scale = cellSize / oldCS;
+    ball.x *= scale; ball.y *= scale; ball.r = cellSize * 0.3;
+    canvas.width  = cellSize * lvl.cols;
+    canvas.height = cellSize * lvl.rows;
+  }
+});
+
+// ── iOS AudioContext unlock on first touch ─────
+document.addEventListener('touchstart', () => {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}, { once: true });
+
+document.addEventListener('touchmove', e => {
+  if (e.target.type === 'range') return; // let slider scroll
+  e.preventDefault();
+}, { passive: false });
+</script>
+
+<script>
+/**
+ * Iframe 元素高亮注入脚本
+ * 需要在目标网站中引入此脚本来支持跨域 iframe 高亮功能
+ *
+ * 使用方法：
+ * 1. 将此脚本添加到目标网站的 HTML 中
+ * 2. 或通过浏览器扩展、用户脚本等方式注入
+ */
+
+(function () {
+  "use strict";
+
+  // 检查是否在 iframe 中
+  if (window.self === window.top) {
+    return; // 不在 iframe 中，不执行
+  }
+
+  // 检查是否已经初始化过
+  if (window.__iframeHighlightInitialized) {
+    return;
+  }
+  window.__iframeHighlightInitialized = true;
+  console.log("Iframe 高亮脚本已加载");
+
+  // 创建高亮覆盖层
+  var overlay = document.createElement("div");
+  overlay.id = "iframe-highlight-overlay";
+  overlay.style.cssText = "\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100vw;\n    height: 100vh;\n    pointer-events: none;\n    z-index: 999999;\n    overflow: hidden;\n  ";
+
+  // 创建悬停高亮框（虚线边框）
+  var highlightBox = document.createElement("div");
+  highlightBox.id = "iframe-highlight-box";
+  highlightBox.style.cssText = "\n    position: absolute;\n    border: 2px dashed #007AFF;\n    background: rgba(0, 122, 255, 0.08);\n    pointer-events: none;\n    display: none;\n    transition: all 0.1s ease;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);\n    border-radius: 2px;\n  ";
+
+  // 创建选中节点的常驻高亮框（实线边框）
+  var selectedBox = document.createElement("div");
+  selectedBox.id = "iframe-selected-box";
+  selectedBox.style.cssText = "\n    position: absolute;\n    border: 2px solid #007AFF;\n    pointer-events: none;\n    display: none;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 107, 53, 0.4);\n    border-radius: 2px;\n    z-index: 1000000;\n  ";
+
+  // 创建悬停标签显示
+  var tagLabel = document.createElement("div");
+  tagLabel.id = "iframe-tag-label";
+  tagLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 2px 6px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 2px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000001;\n    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n    font-weight: 500;\n  ";
+
+  // 创建选中节点标签
+  var selectedLabel = document.createElement("div");
+  selectedLabel.id = "iframe-selected-label";
+  selectedLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 3px 8px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 3px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000002;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);\n    font-weight: 600;\n  ";
+  overlay.appendChild(highlightBox);
+  overlay.appendChild(selectedBox);
+  overlay.appendChild(tagLabel);
+  overlay.appendChild(selectedLabel);
+  document.body.appendChild(overlay);
+
+  // 存储当前选中的元素
+  var selectedElement = null;
+  var highlightEnabled = false;
+
+  // 更新选中元素的高亮显示
+  function updateSelectedHighlight(element) {
+    console.log("updateSelectedHighlight called with:", element);
+    if (!element) {
+      selectedBox.style.display = "none";
+      selectedLabel.style.display = "none";
+      selectedElement = null;
+      console.log("Cleared selected highlight");
+      return;
+    }
+    selectedElement = element;
+    var rect = element.getBoundingClientRect();
+    console.log("Selected element rect:", rect);
+
+    // 更新选中高亮框位置
+    selectedBox.style.display = "block";
+    selectedBox.style.left = "".concat(rect.left - 2, "px");
+    selectedBox.style.top = "".concat(rect.top - 2, "px");
+    selectedBox.style.width = "".concat(rect.width + 4, "px");
+    selectedBox.style.height = "".concat(rect.height + 4, "px");
+
+    // 更新选中标签位置和内容
+    selectedLabel.style.display = "block";
+    selectedLabel.textContent = "\u2713 <".concat(element.tagName.toLowerCase(), ">");
+
+    // 计算标签位置，确保不超出视窗
+    var labelTop = rect.top - 28;
+    var labelLeft = rect.left;
+
+    // 如果标签会超出顶部，显示在元素下方
+    if (labelTop < 5) {
+      labelTop = rect.bottom + 5;
+    }
+
+    // 如果标签会超出右侧，向左调整
+    var labelWidth = selectedLabel.offsetWidth || 100; // 预估宽度
+    if (labelLeft + labelWidth > window.innerWidth - 10) {
+      labelLeft = window.innerWidth - labelWidth - 10;
+    }
+    selectedLabel.style.left = "".concat(Math.max(5, labelLeft), "px");
+    selectedLabel.style.top = "".concat(labelTop, "px");
+    console.log("Selected highlight positioned at:", {
+      left: selectedBox.style.left,
+      top: selectedBox.style.top,
+      width: selectedBox.style.width,
+      height: selectedBox.style.height
+    });
+  }
+  function getElementSelector(element) {
+    if (!(element instanceof Element)) throw new Error('Argument must be a DOM element');
+    var segments = [];
+    var current = element;
+    while (current !== document.documentElement) {
+      var selector = '';
+      // 优先检查唯一ID
+      if (current.id && document.querySelectorAll("#".concat(current.id)).length === 1) {
+        segments.unshift("#".concat(current.id));
+        break; // ID唯一，无需继续向上
+      }
+
+      // 生成类名选择器（取第一个有效类名）
+      var classes = Array.from(current.classList).filter(function (c) {
+        return !c.startsWith('js-');
+      });
+      var className = classes.length > 0 ? ".".concat(classes[0]) : '';
+
+      // 生成位置索引（nth-child）
+      var tag = current.tagName.toLowerCase();
+      if (!className) {
+        var siblings = Array.from(current.parentNode.children);
+        var index = siblings.findIndex(function (el) {
+          return el === current;
+        }) + 1;
+        selector = "".concat(tag, ":nth-child(").concat(index, ")");
+      } else {
+        selector = className;
+      }
+      segments.unshift(selector);
+      current = current.parentElement;
+    }
+
+    // 处理根元素
+    if (current === document.documentElement) {
+      segments.unshift('html');
+    }
+    return segments.join(' > ');
+  }
+
+  // 获取元素文本内容
+  function getElementText(element) {
+    var _element$textContent;
+    if (element.tagName === "INPUT") {
+      return element.value || element.placeholder || "";
+    }
+    if (element.tagName === "TEXTAREA") {
+      return element.value || element.placeholder || "";
+    }
+    var text = ((_element$textContent = element.textContent) === null || _element$textContent === void 0 ? void 0 : _element$textContent.trim()) || "";
+    return text.length > 50 ? text.substring(0, 50) + "..." : text;
+  }
+
+  // 获取元素属性信息
+  function getElementAttributes(element) {
+    var attrs = {};
+    for (var i = 0; i < element.attributes.length; i++) {
+      var attr = element.attributes[i];
+      attrs[attr.name] = attr.value;
+    }
+    return attrs;
+  }
+
+  // 鼠标悬停事件处理
+  function handleMouseOver(e) {
+    if (!highlightEnabled) return;
+    var target = e.target;
+    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
+      return;
+    }
+
+    // 避免高亮 html 和 body 元素
+    if (target === document.documentElement || target === document.body) {
+      return;
+    }
+
+    // 如果是已选中的元素，不显示悬停高亮
+    if (target === selectedElement) {
+      highlightBox.style.display = "none";
+      tagLabel.style.display = "none";
+      return;
+    }
+    var rect = target.getBoundingClientRect();
+    var selector = getElementSelector(target);
+    var text = getElementText(target);
+    var attributes = getElementAttributes(target);
+
+    // 更新悬停高亮框位置
+    highlightBox.style.display = "block";
+    highlightBox.style.left = "".concat(rect.left - 2, "px");
+    highlightBox.style.top = "".concat(rect.top - 2, "px");
+    highlightBox.style.width = "".concat(rect.width + 4, "px");
+    highlightBox.style.height = "".concat(rect.height + 4, "px");
+
+    // 更新标签位置和内容
+    tagLabel.style.display = "block";
+    tagLabel.textContent = "<".concat(target.tagName.toLowerCase(), ">");
+
+    // 计算标签位置，确保不超出视窗
+    var labelTop = rect.top - 22;
+    var labelLeft = rect.left;
+
+    // 如果标签会超出顶部，显示在元素下方
+    if (labelTop < 0) {
+      labelTop = rect.bottom + 5;
+    }
+
+    // 如果标签会超出右侧，向左调整
+    if (labelLeft + tagLabel.offsetWidth > window.innerWidth) {
+      labelLeft = window.innerWidth - tagLabel.offsetWidth - 5;
+    }
+    tagLabel.style.left = "".concat(Math.max(0, labelLeft), "px");
+    tagLabel.style.top = "".concat(labelTop, "px");
+
+    // 发送消息到父窗口
+    var elementInfo = {
+      tagName: target.tagName.toLowerCase(),
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y
+      },
+      selector: selector,
+      text: text,
+      attributes: attributes,
+      url: window.location.href,
+      path: window.location.pathname,
+      timestamp: Date.now()
+    };
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-hover",
+        data: elementInfo,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 鼠标离开事件处理
+  function handleMouseOut(e) {
+    if (!highlightEnabled) return;
+    var relatedTarget = e.relatedTarget;
+
+    // 如果鼠标移动到高亮相关元素上，不隐藏高亮
+    if (relatedTarget && (relatedTarget === highlightBox || relatedTarget === tagLabel || relatedTarget === overlay || relatedTarget === selectedBox || relatedTarget === selectedLabel)) {
+      return;
+    }
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-hover",
+        data: null,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 点击事件处理
+  function handleClick(e) {
+    var target = e.target;
+    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
+      return;
+    }
+
+    // 避免处理 html 和 body 元素
+    if (target === document.documentElement || target === document.body) {
+      return;
+    }
+
+    // 检查是否是交互元素，这些元素需要保留默认行为
+    var isInteractiveElement = ['input', 'textarea', 'select', 'button', 'a'].includes(target.tagName.toLowerCase());
+
+    // 如果高亮功能启用，对于非交互元素阻止默认行为和事件传播
+    if (highlightEnabled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    var rect = target.getBoundingClientRect();
+    var selector = getElementSelector(target);
+    var text = getElementText(target);
+    var attributes = getElementAttributes(target);
+    console.log("Element clicked:", {
+      tagName: target.tagName,
+      selector: selector,
+      rect: rect
+    });
+
+    // 立即更新选中高亮
+    updateSelectedHighlight(target);
+
+    // 隐藏悬停高亮，因为现在是选中状态
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    var elementInfo = {
+      tagName: target.tagName.toLowerCase(),
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y
+      },
+      selector: selector,
+      text: text,
+      attributes: attributes,
+      url: window.location.href,
+      path: window.location.pathname,
+      timestamp: Date.now()
+    };
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-click",
+        data: elementInfo,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 监听来自父窗口的消息
+  function handleParentMessage(event) {
+    console.log("Received message from parent:", event.data);
+    if (event.data.type === "iframe-highlight-toggle") {
+      var enabled = event.data.enabled;
+      console.log("Highlight toggle:", enabled);
+      if (enabled) {
+        enableHighlight();
+      } else {
+        disableHighlight();
+      }
+    } else if (event.data.type === "enable-iframe-highlight") {
+      console.log("Enable iframe highlight");
+      enableHighlight();
+    } else if (event.data.type === "disable-iframe-highlight") {
+      console.log("Disable iframe highlight");
+      disableHighlight();
+    } else if (event.data.type === "toggle-iframe-highlight") {
+      var _enabled = event.data.enabled !== undefined ? event.data.enabled : !highlightEnabled;
+      console.log("Toggle iframe highlight to:", _enabled);
+      if (_enabled) {
+        enableHighlight();
+      } else {
+        disableHighlight();
+      }
+    } else if (event.data.type === "update-selected-element") {
+      var selector = event.data.selector;
+      console.log("Update selected element with selector:", selector);
+      if (selector) {
+        try {
+          var element = document.querySelector(selector);
+          console.log("Found element by selector:", element);
+          updateSelectedHighlight(element);
+        } catch (error) {
+          console.warn("Failed to select element:", error);
+          updateSelectedHighlight(null);
+        }
+      } else {
+        updateSelectedHighlight(null);
+      }
+    } else if (event.data.type === "clear-selected-element") {
+      console.log("Clear selected element");
+      updateSelectedHighlight(null);
+    }
+  }
+
+  // 启用高亮功能
+  function enableHighlight() {
+    console.log("Enabling highlight");
+    document.addEventListener("mouseover", handleMouseOver, true);
+    document.addEventListener("mouseout", handleMouseOut, true);
+    document.addEventListener("click", handleClick, true);
+    highlightEnabled = true;
+    overlay.style.display = "block";
+  }
+
+  // 禁用高亮功能
+  function disableHighlight() {
+    console.log("Disabling highlight");
+    highlightEnabled = false;
+    // 保持事件监听器，但通过 highlightEnabled 变量控制行为
+    // 这样可以保留选中状态的显示
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    // 不隐藏 selectedBox 和 selectedLabel，保留选中状态
+  }
+
+  // 完全禁用高亮功能（移除所有监听器）
+  function fullyDisableHighlight() {
+    console.log("Fully disabling highlight");
+    highlightEnabled = false;
+    document.removeEventListener("mouseover", handleMouseOver, true);
+    document.removeEventListener("mouseout", handleMouseOut, true);
+    document.removeEventListener("click", handleClick, true);
+    overlay.style.display = "none";
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    selectedBox.style.display = "none";
+    selectedLabel.style.display = "none";
+  }
+
+  // 添加事件监听
+  enableHighlight();
+  window.addEventListener("message", handleParentMessage);
+
+  // 暴露全局函数供外部调用
+  window.__iframeHighlightControl = {
+    enable: enableHighlight,
+    disable: disableHighlight,
+    fullyDisable: fullyDisableHighlight,
+    isEnabled: function isEnabled() {
+      return highlightEnabled;
+    },
+    getSelectedElement: function getSelectedElement() {
+      return selectedElement;
+    },
+    updateSelected: updateSelectedHighlight,
+    // 通过消息发送开关控制
+    sendToggleMessage: function sendToggleMessage(enabled) {
+      window.parent.postMessage({
+        type: 'iframe-highlight-status',
+        enabled: enabled || highlightEnabled,
+        source: 'iframe-highlight-injector'
+      }, '*');
+    }
+  };
+
+  // 通知父窗口脚本已加载
+  try {
+    window.parent.postMessage({
+      type: "iframe-highlight-ready",
+      data: {
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: Date.now()
+      },
+      source: "iframe-highlight-injector"
+    }, "*");
+  } catch (error) {
+    console.warn("无法发送就绪消息到父窗口:", error);
+  }
+
+  // 清理函数
+  window.__iframeHighlightCleanup = function () {
+    fullyDisableHighlight();
+    window.removeEventListener("message", handleParentMessage);
+    if (overlay.parentElement) {
+      overlay.parentElement.removeChild(overlay);
+    }
+    delete window.__iframeHighlightInitialized;
+    delete window.__iframeHighlightCleanup;
+  };
+})();
+
+</script>
+</body>
+</html>
