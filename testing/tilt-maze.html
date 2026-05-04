@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Tilt Maze</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #1a1a1f;
+    --wall: #2a2a35;
+    --wall-top: #3d3d50;
+    --ball: #f0c040;
+    --ball-shine: #fff8dc;
+    --goal: #40e0a0;
+    --goal-glow: rgba(64, 224, 160, 0.3);
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --accent: #f0c040;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+    touch-action: none;
+    user-select: none;
+  }
+
+  #screen-start, #screen-game, #screen-win {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+
+  /* ── START SCREEN ── */
+  #screen-start {
+    gap: 28px;
+    background: var(--bg);
+  }
+
+  .title-wrap {
+    text-align: center;
+    line-height: 1;
+  }
+
+  .title-big {
+    font-size: clamp(48px, 14vw, 80px);
+    font-weight: 900;
+    letter-spacing: -2px;
+    color: var(--accent);
+    text-shadow: 0 0 40px rgba(240,192,64,0.4);
+    display: block;
+  }
+
+  .title-sub {
+    font-size: clamp(13px, 3.5vw, 18px);
+    color: var(--muted);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 6px;
+  }
+
+  .ball-demo {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--ball-shine) 0%, var(--ball) 45%, #c08000 100%);
+    box-shadow: 0 0 24px rgba(240,192,64,0.5), 0 4px 16px rgba(0,0,0,0.6);
+    animation: bounce-demo 1.8s ease-in-out infinite;
+  }
+
+  @keyframes bounce-demo {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-14px) rotate(20deg); }
+  }
+
+  .instructions {
+    background: var(--surface);
+    border: 1px solid var(--wall-top);
+    border-radius: 12px;
+    padding: 18px 28px;
+    text-align: center;
+    font-size: clamp(12px, 3.2vw, 15px);
+    color: var(--muted);
+    line-height: 1.8;
+    max-width: 300px;
+  }
+
+  .instructions strong { color: var(--text); }
+
+  .start-btn {
+    background: var(--accent);
+    color: #1a1000;
+    border: none;
+    border-radius: 10px;
+    padding: 16px 48px;
+    font-size: clamp(15px, 4vw, 18px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(240,192,64,0.35);
+    transition: transform 0.1s, box-shadow 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .start-btn:active { transform: scale(0.96); box-shadow: none; }
+
+  .save-info {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    opacity: 0.7;
+  }
+
+  /* ── GAME SCREEN ── */
+  #screen-game {
+    flex-direction: column;
+    background: var(--bg);
+    padding: 0;
+    justify-content: flex-start;
+  }
+
+  #hud {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px 8px;
+    flex-shrink: 0;
+  }
+
+  .hud-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .hud-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .hud-cell { text-align: center; }
+  .hud-cell.right { text-align: right; }
+
+  #canvas-wrap {
+    flex: 1;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #gameCanvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* ── WIN SCREEN ── */
+  #screen-win {
+    background: var(--bg);
+    gap: 24px;
+    display: none;
+  }
+
+  .win-title {
+    font-size: clamp(36px, 11vw, 60px);
+    font-weight: 900;
+    color: var(--goal);
+    text-shadow: 0 0 40px rgba(64,224,160,0.5);
+    letter-spacing: -1px;
+    animation: win-pulse 1s ease-in-out infinite alternate;
+  }
+
+  @keyframes win-pulse {
+    from { text-shadow: 0 0 20px rgba(64,224,160,0.3); }
+    to   { text-shadow: 0 0 60px rgba(64,224,160,0.8); }
+  }
+
+  .win-level {
+    font-size: clamp(14px, 4vw, 18px);
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .win-score {
+    background: var(--surface);
+    border: 1px solid var(--goal);
+    border-radius: 12px;
+    padding: 16px 40px;
+    text-align: center;
+  }
+
+  .win-score .label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .win-score .num { font-size: 48px; font-weight: 700; color: var(--accent); line-height: 1.1; }
+
+  .next-btn {
+    background: var(--goal);
+    color: #001a0e;
+    border: none;
+    border-radius: 10px;
+    padding: 16px 48px;
+    font-size: clamp(15px, 4vw, 18px);
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(64,224,160,0.3);
+    transition: transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .next-btn:active { transform: scale(0.96); }
+
+  /* confetti canvas */
+  #confetti {
+    position: absolute; inset: 0;
+    pointer-events: none;
+  }
+
+  .hidden { display: none !important; }
+
+  /* tilt debug (hidden by default) */
+  #tilt-debug {
+    position: absolute;
+    bottom: 8px; left: 0; right: 0;
+    text-align: center;
+    font-size: 10px;
+    color: var(--muted);
+    opacity: 0;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ START SCREEN ══════════ -->
+<div id="screen-start">
+  <div class="title-wrap">
+    <span class="title-big">TILT</span>
+    <span class="title-sub">maze game</span>
+  </div>
+
+  <div class="ball-demo"></div>
+
+  <div class="instructions">
+    <strong>Tilt your phone</strong> to roll the ball.<br>
+    Reach the <strong style="color:var(--goal)">glowing goal</strong> to advance.<br>
+    Beat your highest level!
+  </div>
+
+  <button class="start-btn" id="startBtn">START</button>
+
+  <div class="save-info" id="saveInfo">Best level: —</div>
+</div>
+
+<!-- ══════════ GAME SCREEN ══════════ -->
+<div id="screen-game" class="hidden">
+  <div id="hud">
+    <div class="hud-cell">
+      <div class="hud-label">Level</div>
+      <div class="hud-value" id="hudLevel">1</div>
+    </div>
+    <div class="hud-cell">
+      <div class="hud-label">Best</div>
+      <div class="hud-value" id="hudBest">—</div>
+    </div>
+    <div class="hud-cell right">
+      <div class="hud-label">Time</div>
+      <div class="hud-value" id="hudTime">0:00</div>
+    </div>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+    <div id="tilt-debug"></div>
+  </div>
+</div>
+
+<!-- ══════════ WIN SCREEN ══════════ -->
+<div id="screen-win" class="hidden">
+  <canvas id="confetti"></canvas>
+  <div class="win-title">NICE!</div>
+  <div class="win-level" id="winLevelLabel">Level 1 Complete</div>
+  <div class="win-score">
+    <div class="label">Best Level</div>
+    <div class="num" id="winBestNum">1</div>
+  </div>
+  <button class="next-btn" id="nextBtn">Next Level →</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// SAVE / LOAD
+// ═══════════════════════════════════════════════
+const SAVE_KEY = 'tiltmaze_save_v1';
+
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { bestLevel: 0 };
+}
+
+function writeSave(data) {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+let saveData = loadSave();
+
+// ═══════════════════════════════════════════════
+// LEVEL DEFINITIONS  (Phase 1: one real level + placeholder)
+// Each cell: 0=open, 1=wall
+// start: [col, row], goal: [col, row]
+// ═══════════════════════════════════════════════
+const LEVELS = [
+  {
+    name: 'Wake Up',
+    cols: 9, rows: 13,
+    start: [1, 1],
+    goal:  [7, 11],
+    grid: [
+      [1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,0,0,1],
+      [1,0,1,1,1,1,1,0,1],
+      [1,0,1,0,0,0,1,0,1],
+      [1,0,1,0,1,0,1,0,1],
+      [1,0,1,0,1,0,0,0,1],
+      [1,0,1,0,1,1,1,1,1],
+      [1,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,0,1,0,1],
+      [1,0,0,0,0,0,1,0,1],
+      [1,0,1,1,1,1,1,0,1],
+      [1,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1],
+    ]
+  },
+  {
+    name: 'Getting Warmer',
+    cols: 11, rows: 15,
+    start: [1, 1],
+    goal:  [9, 13],
+    grid: [
+      [1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,1,0,0,0,0,0,1],
+      [1,0,1,0,1,0,1,1,1,0,1],
+      [1,0,1,0,0,0,0,0,1,0,1],
+      [1,0,1,1,1,1,1,0,1,0,1],
+      [1,0,0,0,0,0,1,0,1,0,1],
+      [1,1,1,0,1,0,1,0,0,0,1],
+      [1,0,0,0,1,0,1,1,1,0,1],
+      [1,0,1,1,1,0,0,0,1,0,1],
+      [1,0,0,0,0,0,1,0,1,0,1],
+      [1,1,1,1,1,0,1,0,0,0,1],
+      [1,0,0,0,1,0,1,1,1,1,1],
+      [1,0,1,0,0,0,0,0,0,0,1],
+      [1,0,1,1,1,1,1,1,1,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1],
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let currentLevel = 0;
+let gameRunning   = false;
+let tiltX = 0, tiltY = 0;
+let ball = { x:0, y:0, vx:0, vy:0, r:0 };
+let cellSize = 0;
+let offsetX = 0, offsetY = 0;
+let levelStartTime = 0;
+let timerInterval = null;
+
+// ═══════════════════════════════════════════════
+// DOM REFS
+// ═══════════════════════════════════════════════
+const canvas   = document.getElementById('gameCanvas');
+const ctx      = canvas.getContext('2d');
+const $start   = document.getElementById('screen-start');
+const $game    = document.getElementById('screen-game');
+const $win     = document.getElementById('screen-win');
+const $hudLvl  = document.getElementById('hudLevel');
+const $hudBest = document.getElementById('hudBest');
+const $hudTime = document.getElementById('hudTime');
+const $winLbl  = document.getElementById('winLevelLabel');
+const $winBest = document.getElementById('winBestNum');
+const $saveInf = document.getElementById('saveInfo');
+const $debug   = document.getElementById('tilt-debug');
+
+// ═══════════════════════════════════════════════
+// SHOW SAVE STATE ON START SCREEN
+// ═══════════════════════════════════════════════
+if (saveData.bestLevel > 0) {
+  $saveInf.textContent = `Best level: ${saveData.bestLevel}`;
+}
+
+// ═══════════════════════════════════════════════
+// TILT INPUT — DeviceMotion (with iOS permission)
+// ═══════════════════════════════════════════════
+const TILT_SCALE = 0.38;   // gravity sensitivity
+const FRICTION   = 0.82;   // velocity damping per frame
+const MAX_SPEED  = 8;      // max pixel/frame speed
+
+function handleMotion(e) {
+  const a = e.accelerationIncludingGravity || e.acceleration;
+  if (!a) return;
+  // portrait: x = left/right tilt, y = forward/back (reversed)
+  tiltX =  (a.x || 0) * TILT_SCALE;
+  tiltY = -(a.y || 0) * TILT_SCALE;
+}
+
+function requestTiltPermission() {
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    // iOS 13+
+    DeviceMotionEvent.requestPermission()
+      .then(state => {
+        if (state === 'granted') {
+          window.addEventListener('devicemotion', handleMotion);
+        }
+      }).catch(() => {});
+  } else {
+    window.addEventListener('devicemotion', handleMotion);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// FALLBACK: keyboard arrows for desktop testing
+// ═══════════════════════════════════════════════
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.key] = true; });
+window.addEventListener('keyup',   e => { keys[e.key] = false; });
+
+function applyKeyboardTilt() {
+  const KS = 0.5;
+  if (keys['ArrowLeft'])  tiltX -= KS;
+  if (keys['ArrowRight']) tiltX += KS;
+  if (keys['ArrowUp'])    tiltY -= KS;
+  if (keys['ArrowDown'])  tiltY += KS;
+}
+
+// ═══════════════════════════════════════════════
+// LEVEL SETUP
+// ═══════════════════════════════════════════════
+function setupLevel(lvlIndex) {
+  const lvl = LEVELS[lvlIndex % LEVELS.length];
+  const wrap = document.getElementById('canvas-wrap');
+  const maxW = wrap.clientWidth;
+  const maxH = wrap.clientHeight;
+
+  cellSize = Math.floor(Math.min(maxW / lvl.cols, maxH / lvl.rows));
+  const mazeW = cellSize * lvl.cols;
+  const mazeH = cellSize * lvl.rows;
+
+  canvas.width  = mazeW;
+  canvas.height = mazeH;
+  offsetX = 0;
+  offsetY = 0;
+
+  ball.r  = cellSize * 0.3;
+  ball.x  = lvl.start[0] * cellSize + cellSize / 2;
+  ball.y  = lvl.start[1] * cellSize + cellSize / 2;
+  ball.vx = 0;
+  ball.vy = 0;
+
+  tiltX = 0; tiltY = 0;
+
+  $hudLvl.textContent  = lvlIndex + 1;
+  $hudBest.textContent = saveData.bestLevel > 0 ? saveData.bestLevel : '—';
+
+  levelStartTime = Date.now();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 500);
+}
+
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - levelStartTime) / 1000);
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  $hudTime.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+// ═══════════════════════════════════════════════
+// COLLISION — AABB wall check, push ball out
+// ═══════════════════════════════════════════════
+function collideBall() {
+  const lvl = LEVELS[currentLevel % LEVELS.length];
+  const r   = ball.r;
+
+  // Check 4 compass points + diagonals on ball circle
+  const checkPoints = [
+    [ball.x - r, ball.y],
+    [ball.x + r, ball.y],
+    [ball.x, ball.y - r],
+    [ball.x, ball.y + r],
+    [ball.x - r*0.7, ball.y - r*0.7],
+    [ball.x + r*0.7, ball.y - r*0.7],
+    [ball.x - r*0.7, ball.y + r*0.7],
+    [ball.x + r*0.7, ball.y + r*0.7],
+  ];
+
+  for (const [px, py] of checkPoints) {
+    const col = Math.floor(px / cellSize);
+    const row = Math.floor(py / cellSize);
+    if (col < 0 || col >= lvl.cols || row < 0 || row >= lvl.rows) continue;
+    if (lvl.grid[row][col] !== 1) continue;
+
+    // Push ball out of this wall cell
+    const wallL = col * cellSize;
+    const wallR = wallL + cellSize;
+    const wallT = row * cellSize;
+    const wallB = wallT + cellSize;
+
+    const overlapL = ball.x - wallR;
+    const overlapR = ball.x - wallL;
+    const overlapT = ball.y - wallB;
+    const overlapB = ball.y - wallT;
+
+    const absL = Math.abs(overlapL);
+    const absR = Math.abs(overlapR);
+    const absT = Math.abs(overlapT);
+    const absB = Math.abs(overlapB);
+
+    const minOver = Math.min(absL + r, absR - r, absT + r, absB - r);
+
+    // Horizontal resolve
+    if (absL + r < absT + r && absL + r < absB - r) {
+      ball.x = wallR + r + 0.5;
+      ball.vx *= -0.2;
+    } else if (absR - r < absT + r && absR - r < absB - r) {
+      ball.x = wallL - r - 0.5;
+      ball.vx *= -0.2;
+    } else if (absT + r < absL + r && absT + r < absR - r) {
+      ball.y = wallB + r + 0.5;
+      ball.vy *= -0.2;
+    } else {
+      ball.y = wallT - r - 0.5;
+      ball.vy *= -0.2;
+    }
+  }
+
+  // Clamp to maze bounds
+  ball.x = Math.max(r, Math.min(lvl.cols * cellSize - r, ball.x));
+  ball.y = Math.max(r, Math.min(lvl.rows * cellSize - r, ball.y));
+}
+
+// ═══════════════════════════════════════════════
+// WIN CHECK
+// ═══════════════════════════════════════════════
+function checkWin() {
+  const lvl = LEVELS[currentLevel % LEVELS.length];
+  const gx  = lvl.goal[0] * cellSize + cellSize / 2;
+  const gy  = lvl.goal[1] * cellSize + cellSize / 2;
+  const dist = Math.hypot(ball.x - gx, ball.y - gy);
+  return dist < cellSize * 0.45;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+let goalPulse = 0;
+let ballRotation = 0;
+
+function drawFrame() {
+  const lvl = LEVELS[currentLevel % LEVELS.length];
+  const cs  = cellSize;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Background
+  ctx.fillStyle = '#0d0d0f';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  goalPulse = (goalPulse + 0.06) % (Math.PI * 2);
+  const glow = 0.55 + 0.45 * Math.sin(goalPulse);
+
+  // Draw cells
+  for (let row = 0; row < lvl.rows; row++) {
+    for (let col = 0; col < lvl.cols; col++) {
+      const x = col * cs;
+      const y = row * cs;
+      const cell = lvl.grid[row][col];
+
+      if (cell === 1) {
+        // Wall — 3D layered look
+        ctx.fillStyle = '#1e1e28';
+        ctx.fillRect(x, y, cs, cs);
+        ctx.fillStyle = '#2a2a38';
+        ctx.fillRect(x+1, y+1, cs-2, cs-2);
+        // top highlight
+        ctx.fillStyle = '#3a3a50';
+        ctx.fillRect(x+1, y+1, cs-2, 3);
+        ctx.fillRect(x+1, y+1, 3, cs-2);
+      } else {
+        // Floor
+        ctx.fillStyle = '#12121a';
+        ctx.fillRect(x, y, cs, cs);
+        // subtle grid lines
+        ctx.strokeStyle = '#1a1a24';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(x+0.25, y+0.25, cs-0.5, cs-0.5);
+      }
+    }
+  }
+
+  // Draw goal
+  const gx = lvl.goal[0] * cs + cs/2;
+  const gy = lvl.goal[1] * cs + cs/2;
+  const gr = cs * 0.36;
+
+  // Glow rings
+  for (let i = 3; i > 0; i--) {
+    ctx.beginPath();
+    ctx.arc(gx, gy, gr + i * cs * 0.1 * glow, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(64,224,160,${0.04 * glow * (4-i)})`;
+    ctx.fill();
+  }
+
+  // Goal star / diamond
+  ctx.save();
+  ctx.translate(gx, gy);
+  ctx.rotate(goalPulse * 0.5);
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    const rad   = i % 2 === 0 ? gr : gr * 0.5;
+    i === 0 ? ctx.moveTo(Math.cos(angle)*rad, Math.sin(angle)*rad)
+            : ctx.lineTo(Math.cos(angle)*rad, Math.sin(angle)*rad);
+  }
+  ctx.closePath();
+  ctx.fillStyle = `rgba(64,224,160,${0.7 + 0.3*glow})`;
+  ctx.fill();
+  ctx.restore();
+
+  // Draw start marker (subtle)
+  const sx = lvl.start[0] * cs + cs/2;
+  const sy = lvl.start[1] * cs + cs/2;
+  ctx.beginPath();
+  ctx.arc(sx, sy, cs*0.2, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(120,120,160,0.25)';
+  ctx.fill();
+
+  // Draw ball
+  ballRotation += (Math.abs(ball.vx) + Math.abs(ball.vy)) * 0.04;
+  const br = ball.r;
+
+  // Shadow
+  ctx.beginPath();
+  ctx.ellipse(ball.x + 2, ball.y + 4, br*0.9, br*0.5, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fill();
+
+  // Ball body
+  const gradient = ctx.createRadialGradient(
+    ball.x - br*0.3, ball.y - br*0.3, br*0.05,
+    ball.x, ball.y, br
+  );
+  gradient.addColorStop(0, '#fff8c0');
+  gradient.addColorStop(0.3, '#f0c040');
+  gradient.addColorStop(1, '#8a5a00');
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, br, 0, Math.PI*2);
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // Spin stripe
+  ctx.save();
+  ctx.translate(ball.x, ball.y);
+  ctx.rotate(ballRotation);
+  ctx.beginPath();
+  ctx.arc(0, 0, br, -0.4, 0.4);
+  ctx.strokeStyle = 'rgba(255,255,200,0.4)';
+  ctx.lineWidth = br * 0.35;
+  ctx.stroke();
+  ctx.restore();
+
+  // Specular highlight
+  ctx.beginPath();
+  ctx.arc(ball.x - br*0.32, ball.y - br*0.32, br*0.22, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,240,0.75)';
+  ctx.fill();
+}
+
+// ═══════════════════════════════════════════════
+// GAME LOOP
+// ═══════════════════════════════════════════════
+let lastTime = 0;
+const STEP = 1000/60;
+
+function gameLoop(ts) {
+  if (!gameRunning) return;
+  requestAnimationFrame(gameLoop);
+
+  applyKeyboardTilt();
+
+  // Physics
+  ball.vx = (ball.vx + tiltX) * FRICTION;
+  ball.vy = (ball.vy + tiltY) * FRICTION;
+
+  // Clamp speed
+  const speed = Math.hypot(ball.vx, ball.vy);
+  if (speed > MAX_SPEED) {
+    ball.vx = ball.vx / speed * MAX_SPEED;
+    ball.vy = ball.vy / speed * MAX_SPEED;
+  }
+
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  collideBall();
+  drawFrame();
+
+  // Win?
+  if (checkWin()) {
+    gameRunning = false;
+    clearInterval(timerInterval);
+    setTimeout(showWinScreen, 120);
+  }
+
+  // Reset keyboard tilt each frame (keyboard adds incrementally above)
+  // Only reset if NO arrow key is pressed
+  if (!keys['ArrowLeft'] && !keys['ArrowRight']) tiltX *= 0.85;
+  if (!keys['ArrowUp']   && !keys['ArrowDown'])  tiltY *= 0.85;
+}
+
+// ═══════════════════════════════════════════════
+// WIN SCREEN + CONFETTI
+// ═══════════════════════════════════════════════
+function showWinScreen() {
+  const completedLevel = currentLevel + 1;
+  if (completedLevel > saveData.bestLevel) {
+    saveData.bestLevel = completedLevel;
+    writeSave(saveData);
+  }
+
+  $winLbl.textContent  = `Level ${completedLevel} Complete`;
+  $winBest.textContent = saveData.bestLevel;
+
+  $game.classList.add('hidden');
+  $win.style.display   = 'flex';
+
+  startConfetti();
+}
+
+// Simple canvas confetti
+const confCanvas = document.getElementById('confetti');
+const confCtx    = confCanvas.getContext('2d');
+let confParts    = [];
+let confRunning  = false;
+
+function startConfetti() {
+  confCanvas.width  = window.innerWidth;
+  confCanvas.height = window.innerHeight;
+  confParts = [];
+  const colors = ['#f0c040','#40e0a0','#e040a0','#40a0e0','#e07040','#ffffff'];
+  for (let i = 0; i < 90; i++) {
+    confParts.push({
+      x: Math.random() * confCanvas.width,
+      y: -10 - Math.random() * 200,
+      vx: (Math.random() - 0.5) * 3,
+      vy: 2 + Math.random() * 3,
+      r: 4 + Math.random() * 5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      spin: Math.random() * Math.PI * 2,
+      spinV: (Math.random() - 0.5) * 0.2,
+      shape: Math.random() > 0.5 ? 'rect' : 'circle',
+    });
+  }
+  confRunning = true;
+  animateConfetti();
+}
+
+function animateConfetti() {
+  if (!confRunning) return;
+  confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+  let alive = 0;
+  for (const p of confParts) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.spin += p.spinV;
+    p.vy += 0.04;
+    if (p.y < confCanvas.height + 20) alive++;
+    confCtx.save();
+    confCtx.translate(p.x, p.y);
+    confCtx.rotate(p.spin);
+    confCtx.fillStyle = p.color;
+    if (p.shape === 'rect') {
+      confCtx.fillRect(-p.r, -p.r/2, p.r*2, p.r);
+    } else {
+      confCtx.beginPath();
+      confCtx.arc(0, 0, p.r, 0, Math.PI*2);
+      confCtx.fill();
+    }
+    confCtx.restore();
+  }
+  if (alive > 0) requestAnimationFrame(animateConfetti);
+  else confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+}
+
+// ═══════════════════════════════════════════════
+// BUTTON HANDLERS
+// ═══════════════════════════════════════════════
+document.getElementById('startBtn').addEventListener('click', () => {
+  requestTiltPermission();
+  currentLevel = 0;
+  $start.classList.add('hidden');
+  $game.classList.remove('hidden');
+  $win.style.display = 'none';
+  setupLevel(currentLevel);
+  gameRunning = true;
+  requestAnimationFrame(gameLoop);
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  confRunning = false;
+  currentLevel++;
+  $win.style.display = 'none';
+  $game.classList.remove('hidden');
+  setupLevel(currentLevel);
+  gameRunning = true;
+  requestAnimationFrame(gameLoop);
+});
+
+// ═══════════════════════════════════════════════
+// RESIZE HANDLING
+// ═══════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  if (gameRunning || !$game.classList.contains('hidden')) {
+    const lvl = LEVELS[currentLevel % LEVELS.length];
+    const wrap = document.getElementById('canvas-wrap');
+    const oldCellSize = cellSize;
+    cellSize = Math.floor(Math.min(wrap.clientWidth / lvl.cols, wrap.clientHeight / lvl.rows));
+    const scale = cellSize / oldCellSize;
+    ball.x *= scale; ball.y *= scale; ball.r = cellSize * 0.3;
+    canvas.width  = cellSize * lvl.cols;
+    canvas.height = cellSize * lvl.rows;
+  }
+});
+
+// Prevent page scroll on mobile
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+</script>
+</body>
+</html>
