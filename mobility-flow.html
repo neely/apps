@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Mobility Flow</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #21262d;
+    --tide: #58a6ff;
+    --ember: #f0883e;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --success: #3fb950;
+    --warn: #d29922;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 32px 24px;
+    transition: opacity 0.35s ease;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; }
+
+  /* ═══ START SCREEN ═══ */
+  #start-screen { gap: 0; justify-content: flex-start; padding-top: 36px; }
+
+  .logo-block { text-align: center; margin-bottom: 20px; width: 100%; }
+  .logo-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px; letter-spacing: 6px;
+    color: var(--tide); line-height: 1;
+    text-shadow: 0 0 40px rgba(88,166,255,0.3);
+  }
+  .logo-sub {
+    font-size: 10px; letter-spacing: 4px;
+    color: var(--muted); margin-top: 5px;
+  }
+
+  /* Streak bar */
+  .streak-bar {
+    width: 100%; max-width: 340px;
+    display: flex; align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 13px 18px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    user-select: none;
+  }
+  .streak-bar:active { border-color: var(--tide); }
+
+  .streak-left { display: flex; flex-direction: column; gap: 2px; }
+  .streak-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px; line-height: 1;
+    color: var(--tide); letter-spacing: 2px;
+  }
+  .streak-number.broken { color: var(--muted); }
+  .streak-label { font-size: 10px; letter-spacing: 3px; color: var(--muted); }
+
+  .streak-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .streak-status { font-size: 11px; letter-spacing: 1px; color: var(--success); }
+  .streak-status.warn { color: var(--warn); }
+  .streak-status.dead { color: var(--muted); }
+  .streak-hint { font-size: 10px; letter-spacing: 1px; color: var(--muted); }
+
+  /* Sequence list */
+  .sequence-list {
+    width: 100%; max-width: 340px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .seq-item {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .seq-item:last-child { border-bottom: none; }
+  .seq-name { color: var(--text); letter-spacing: 0.5px; }
+  .seq-dur { color: var(--muted); font-size: 10px; }
+
+  .total-time {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 2px; margin-bottom: 22px;
+  }
+
+  .btn-start {
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    border: 2px solid var(--tide);
+    background: transparent; color: var(--tide);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px; letter-spacing: 4px;
+    cursor: pointer; position: relative;
+    transition: all 0.2s ease;
+  }
+  .btn-start::before {
+    content: ''; position: absolute; inset: 6px;
+    border-radius: 50%;
+    border: 1px solid rgba(88,166,255,0.2);
+  }
+  .btn-start:active {
+    transform: scale(0.96);
+    box-shadow: 0 0 30px rgba(88,166,255,0.25);
+    background: rgba(88,166,255,0.08);
+  }
+
+  /* ═══ CHAIN SCREEN ═══ */
+  #chain-screen { justify-content: flex-start; padding: 0; }
+
+  .chain-header {
+    width: 100%;
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 10px;
+    flex-shrink: 0;
+  }
+  .chain-back {
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--muted); cursor: pointer; padding: 6px 0;
+  }
+  .chain-back:active { color: var(--text); }
+  .chain-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 4px; color: var(--text);
+  }
+  .chain-io { display: flex; gap: 16px; }
+  .chain-io-btn {
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--muted); cursor: pointer;
+    padding: 6px 0; text-transform: uppercase;
+  }
+  .chain-io-btn:active { color: var(--text); }
+
+  .chain-streak-wrap {
+    display: flex; align-items: baseline;
+    gap: 8px; margin-bottom: 4px;
+    flex-shrink: 0; padding: 0 20px;
+  }
+  .chain-streak-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px; line-height: 1;
+    color: var(--tide); letter-spacing: 3px;
+  }
+  .chain-streak-unit {
+    font-size: 13px; letter-spacing: 3px; color: var(--muted);
+  }
+
+  .chain-sub {
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--muted); margin-bottom: 16px;
+    flex-shrink: 0; padding: 0 20px;
+  }
+
+  /* Grid scroll area */
+  .chain-grid-wrap {
+    flex: 1; width: 100%;
+    overflow-y: auto; overflow-x: hidden;
+    padding: 0 16px 24px;
+  }
+
+  /* Weeks flow left→right, wrapping, each col = one week */
+  .chain-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .chain-week-col {
+    display: flex; flex-direction: column;
+    gap: 4px; align-items: center;
+  }
+  .chain-week-label {
+    font-size: 9px; letter-spacing: 1px;
+    color: var(--muted); margin-bottom: 2px;
+  }
+
+  .chain-cell {
+    width: 34px; height: 34px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition: all 0.2s ease;
+  }
+  .chain-cell.done {
+    background: rgba(88,166,255,0.12);
+    border-color: var(--tide);
+    color: var(--tide);
+  }
+  .chain-cell.done-today {
+    background: rgba(63,185,80,0.15);
+    border-color: var(--success);
+    color: var(--success);
+    box-shadow: 0 0 10px rgba(63,185,80,0.2);
+  }
+  .chain-cell.missed {
+    background: rgba(240,136,62,0.07);
+    border-color: rgba(240,136,62,0.25);
+    color: rgba(240,136,62,0.5);
+    font-size: 12px;
+  }
+  .chain-cell.future {
+    background: transparent;
+    border: 1px dashed rgba(33,38,45,1);
+    color: transparent;
+  }
+
+  /* ═══ SESSION SCREEN ═══ */
+  #session-screen { justify-content: flex-start; padding: 0; gap: 0; }
+
+  .progress-bar-wrap { width: 100%; height: 3px; background: var(--border); flex-shrink: 0; }
+  .progress-bar-fill { height: 100%; background: var(--tide); transition: width 0.5s ease; }
+
+  .step-counter {
+    width: 100%; display: flex;
+    justify-content: space-between; align-items: center;
+    padding: 14px 20px 0;
+    font-size: 11px; color: var(--muted);
+    letter-spacing: 2px; flex-shrink: 0;
+  }
+
+  .session-content {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    width: 100%; padding: 0 24px;
+  }
+
+  .move-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px; letter-spacing: 3px;
+    text-align: center; line-height: 1.1; margin-bottom: 6px;
+  }
+  .side-badge {
+    font-size: 11px; letter-spacing: 3px;
+    color: var(--ember); margin-bottom: 28px; min-height: 16px;
+  }
+
+  .timer-ring-wrap {
+    position: relative; width: 160px; height: 160px; margin-bottom: 24px;
+  }
+  .timer-ring-wrap svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .timer-ring-bg { fill: none; stroke: var(--border); stroke-width: 3; }
+  .timer-ring-fill {
+    fill: none; stroke: var(--tide); stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+  }
+  .timer-number {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .timer-digits {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px; line-height: 1;
+    color: var(--text); letter-spacing: 2px;
+  }
+  .timer-label { font-size: 10px; letter-spacing: 3px; color: var(--muted); margin-top: 2px; }
+
+  .rep-display {
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    width: 160px; height: 160px;
+    border: 2px solid var(--border);
+    border-radius: 50%; margin-bottom: 24px;
+  }
+  .rep-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px; line-height: 1;
+    color: var(--ember);
+  }
+  .rep-label { font-size: 10px; letter-spacing: 3px; color: var(--muted); margin-top: 2px; }
+
+  .move-cue {
+    font-size: 12px; color: var(--muted);
+    text-align: center; letter-spacing: 0.5px;
+    line-height: 1.6; max-width: 280px;
+    margin-bottom: 24px; min-height: 40px;
+  }
+
+  .tap-btn {
+    width: 100%; max-width: 300px; padding: 16px;
+    border-radius: 8px; border: 1px solid var(--tide);
+    background: transparent; color: var(--tide);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px; letter-spacing: 3px;
+    text-transform: uppercase; cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tap-btn:active { background: rgba(88,166,255,0.1); transform: scale(0.98); }
+  .tap-btn.rep-mode { border-color: var(--ember); color: var(--ember); }
+  .tap-btn.rep-mode:active { background: rgba(240,136,62,0.1); }
+
+  .up-next {
+    position: absolute; bottom: 18px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--muted); white-space: nowrap;
+  }
+  .up-next span { color: var(--text); }
+
+  /* ═══ DONE SCREEN ═══ */
+  #done-screen { gap: 16px; text-align: center; }
+
+  .done-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px; letter-spacing: 5px;
+    color: var(--success);
+    text-shadow: 0 0 30px rgba(63,185,80,0.4);
+  }
+  .done-streak {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 100px; line-height: 1;
+    color: var(--tide); letter-spacing: 4px;
+  }
+  .done-streak-label {
+    font-size: 11px; letter-spacing: 4px;
+    color: var(--muted); margin-top: -6px;
+  }
+  .done-stat { font-size: 12px; color: var(--muted); letter-spacing: 2px; }
+  .done-stat strong { color: var(--text); }
+  .done-quip { font-size: 11px; color: var(--muted); letter-spacing: 1px; font-style: italic; }
+
+  .done-actions { display: flex; gap: 12px; margin-top: 8px; }
+
+  .btn-secondary {
+    padding: 13px 24px; border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 2px;
+    cursor: pointer; transition: all 0.2s ease;
+  }
+  .btn-secondary:active { color: var(--text); border-color: var(--text); }
+
+  /* Transitions */
+  .step-transition { animation: stepIn 0.32s ease both; }
+  @keyframes stepIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .pulse-warn .timer-ring-fill { stroke: var(--ember); }
+  .pulse-warn .timer-digits { color: var(--ember); }
+</style>
+</head>
+<body>
+
+<!-- ═══ START ═══ -->
+<div class="screen" id="start-screen">
+  <div class="logo-block">
+    <div class="logo-title">MOBILITY</div>
+    <div class="logo-sub">Off-day flow · ~11 min</div>
+  </div>
+
+  <div class="streak-bar" id="streak-bar">
+    <div class="streak-left">
+      <div class="streak-number" id="streak-num">0</div>
+      <div class="streak-label">DAY STREAK</div>
+    </div>
+    <div class="streak-right">
+      <div class="streak-status" id="streak-status">START YOUR CHAIN</div>
+      <div class="streak-hint">TAP TO SEE CHAIN →</div>
+    </div>
+  </div>
+
+  <div class="sequence-list" id="seq-list"></div>
+  <div class="total-time" id="total-time-label"></div>
+  <button class="btn-start" id="btn-start">START</button>
+</div>
+
+<!-- ═══ CHAIN ═══ -->
+<div class="screen hidden" id="chain-screen">
+  <div class="chain-header">
+    <div class="chain-back" id="chain-back">← BACK</div>
+    <div class="chain-title">THE CHAIN</div>
+    <div class="chain-io">
+      <div class="chain-io-btn" id="btn-export">EXPORT</div>
+      <div class="chain-io-btn" id="btn-import">IMPORT</div>
+    </div>
+  </div>
+
+  <div class="chain-streak-wrap">
+    <div class="chain-streak-num" id="chain-streak-num">0</div>
+    <div class="chain-streak-unit">DAYS</div>
+  </div>
+  <div class="chain-sub" id="chain-sub">COMPLETE A SESSION TO START YOUR CHAIN</div>
+
+  <div class="chain-grid-wrap">
+    <div class="chain-grid" id="chain-grid"></div>
+  </div>
+
+  <input type="file" id="import-input" accept=".json" style="display:none">
+</div>
+
+<!-- ═══ SESSION ═══ -->
+<div class="screen hidden" id="session-screen">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-fill"></div>
+  </div>
+  <div class="step-counter">
+    <span id="step-label">STEP 1 / 13</span>
+    <span id="elapsed-label">0:00</span>
+  </div>
+  <div class="session-content" id="session-content">
+    <div class="move-name" id="move-name">HIP FLEXOR</div>
+    <div class="side-badge" id="side-badge"></div>
+
+    <div class="timer-ring-wrap" id="timer-wrap">
+      <svg viewBox="0 0 160 160">
+        <circle class="timer-ring-bg" cx="80" cy="80" r="72"/>
+        <circle class="timer-ring-fill" id="ring-fill" cx="80" cy="80" r="72"
+                stroke-dasharray="452.4" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-number">
+        <div class="timer-digits" id="timer-digits">60</div>
+        <div class="timer-label">SECONDS</div>
+      </div>
+    </div>
+
+    <div class="rep-display" id="rep-display">
+      <div class="rep-count" id="rep-count">20</div>
+      <div class="rep-label">REPS</div>
+    </div>
+
+    <div class="move-cue" id="move-cue"></div>
+    <button class="tap-btn" id="tap-btn">DONE — NEXT →</button>
+  </div>
+  <div class="up-next">UP NEXT — <span id="next-name">—</span></div>
+</div>
+
+<!-- ═══ DONE ═══ -->
+<div class="screen hidden" id="done-screen">
+  <div class="done-title">DONE</div>
+  <div class="done-streak" id="done-streak-num">1</div>
+  <div class="done-streak-label">DAY STREAK</div>
+  <div class="done-stat">Session time: <strong id="session-time">—</strong></div>
+  <div class="done-quip" id="done-quip"></div>
+  <div class="done-actions">
+    <button class="btn-secondary" id="btn-see-chain">SEE CHAIN</button>
+    <button class="btn-secondary" id="btn-back-home">HOME</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// SEQUENCE DATA
+// ═══════════════════════════════════════════════════════
+const BASE = [
+  {
+    name: 'HIP FLEXOR\nWALL STRETCH',
+    mode: 'timer', dur: 60,
+    sides: ['LEFT','RIGHT'],
+    cue: 'Knee on floor, rear foot behind you. Drive hips forward and squeeze glute. Tall spine.',
+  },
+  {
+    name: 'COUCH\nSTRETCH',
+    mode: 'timer', dur: 60,
+    sides: ['LEFT','RIGHT'],
+    cue: 'Rear shin up wall, heel toward your butt. Front foot forward. Work toward upright torso. Hips square.',
+  },
+  {
+    name: 'DOORFRAME\nPEC STRETCH',
+    mode: 'timer', dur: 30,
+    sides: ['LEFT','RIGHT'],
+    cue: 'Forearm on frame, elbow at 90°. Step slowly through the doorframe. Feel the front of the shoulder open.',
+  },
+  {
+    name: 'PLANK',
+    mode: 'timer', dur: 30,
+    sides: null,
+    cue: 'Forearms down. Body rigid head to heel. Squeeze glutes and abs together. No sagging hips.',
+  },
+  {
+    name: 'SIDE PLANK',
+    mode: 'timer', dur: 20,
+    sides: ['LEFT','RIGHT'],
+    cue: 'Forearm down, hips stacked and square. Drive hip toward the ceiling. Free hand on hip or raised.',
+  },
+  {
+    name: 'GOBLET SQUAT\nHOLD',
+    mode: 'reps', dur: 5,
+    sides: null,
+    cue: '12kg. Pause 2–3 sec at the bottom. Elbows inside knees. Chest tall.',
+  },
+  {
+    name: 'BAND\nPULL-APARTS',
+    mode: 'reps', dur: 20,
+    sides: null,
+    cue: 'Arms straight at chest height. Pull band apart fully. Squeeze between shoulder blades at end range.',
+  },
+];
+
+function buildSteps(base) {
+  const out = [];
+  for (const m of base) {
+    if (m.sides) {
+      for (const side of m.sides) out.push({ ...m, side });
+    } else {
+      out.push({ ...m, side: null });
+    }
+  }
+  return out;
+}
+
+const STEPS = buildSteps(BASE);
+const TOTAL_STEPS = STEPS.length;
+const CIRC = 2 * Math.PI * 72; // 452.389
+
+const QUIPS = [
+  'Hip flexors hate you. Scar tissue does not.',
+  'Ten minutes today. Better pop-up in six weeks.',
+  'The chain grows. Don\'t break it.',
+  'Desk job. Beach goals. This is how.',
+  'Posterior chain, unlocked.',
+  'Pull-aparts: the gift that keeps on giving.',
+  'Couch stretch was awful. That\'s the point.',
+  'Shoulders back. Wife confirmed.',
+];
+
+// ═══════════════════════════════════════════════════════
+// DATE HELPERS
+// ═══════════════════════════════════════════════════════
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function daysBetween(a, b) {
+  return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00')) / 86400000);
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function dowOf(dateStr) {
+  return new Date(dateStr+'T00:00:00').getDay(); // 0=Sun
+}
+
+function fmtTime(sec) {
+  return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+}
+
+// ═══════════════════════════════════════════════════════
+// STREAK STORAGE  (localStorage)
+// { days: ['YYYY-MM-DD', ...] }
+// ═══════════════════════════════════════════════════════
+const LS_KEY = 'mobility_chain_v1';
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || { days: [] }; }
+  catch { return { days: [] }; }
+}
+
+function saveData(data) {
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+}
+
+function markToday(data) {
+  const t = todayKey();
+  if (!data.days.includes(t)) { data.days.push(t); data.days.sort(); }
+  return data;
+}
+
+// Chain rule: broken only if gap between consecutive done days > 2
+// (i.e. you missed 3+ days in a row)
+function computeStreak(data) {
+  if (!data.days.length) return { streak: 0, alive: false, chainStart: null };
+
+  const today = todayKey();
+  const sorted = [...data.days].sort();
+  const lastDone = sorted[sorted.length - 1];
+  const gapFromToday = daysBetween(lastDone, today);
+
+  // If most recent done day is >2 days ago, chain is dead
+  if (gapFromToday > 2) return { streak: 0, alive: false, chainStart: null };
+
+  // Walk backwards through done days, counting consecutive chain members
+  // A gap between two done days of >2 breaks the chain
+  let streak = sorted.length; // start assuming all in chain
+  let chainStart = sorted[0];
+
+  for (let i = sorted.length - 1; i > 0; i--) {
+    const gap = daysBetween(sorted[i-1], sorted[i]);
+    if (gap > 2) {
+      // Chain broke here — only count from i onwards
+      streak = sorted.length - i;
+      chainStart = sorted[i];
+      break;
+    }
+  }
+
+  return { streak, alive: true, chainStart };
+}
+
+// ═══════════════════════════════════════════════════════
+// SCREEN SWITCHING
+// ═══════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s =>
+    s.classList.toggle('hidden', s.id !== id)
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// START SCREEN
+// ═══════════════════════════════════════════════════════
+function buildStartScreen() {
+  const list = document.getElementById('seq-list');
+  list.innerHTML = '';
+  for (const m of BASE) {
+    const row = document.createElement('div');
+    row.className = 'seq-item';
+    const dur = m.mode === 'timer'
+      ? (m.sides ? `${m.dur}s × 2 sides` : `${m.dur}s`)
+      : `${m.dur} reps`;
+    row.innerHTML = `
+      <span class="seq-name">${m.name.replace('\n',' ')}</span>
+      <span class="seq-dur">${dur}</span>
+    `;
+    list.appendChild(row);
+  }
+  let est = 0;
+  for (const s of STEPS) est += s.mode === 'timer' ? s.dur : 15;
+  document.getElementById('total-time-label').textContent = `~${Math.round(est/60)} MIN TOTAL`;
+  refreshStreakBar();
+}
+
+function refreshStreakBar() {
+  const data = loadData();
+  const { streak, alive } = computeStreak(data);
+  const today = todayKey();
+  const doneToday = data.days.includes(today);
+
+  const numEl = document.getElementById('streak-num');
+  const statusEl = document.getElementById('streak-status');
+
+  numEl.textContent = streak;
+  numEl.className = 'streak-number' + (alive ? '' : ' broken');
+
+  if (streak === 0) {
+    statusEl.textContent = 'START YOUR CHAIN';
+    statusEl.className = 'streak-status dead';
+  } else if (doneToday) {
+    statusEl.textContent = '✓ DONE TODAY';
+    statusEl.className = 'streak-status';
+  } else {
+    const sorted = [...data.days].sort();
+    const gap = daysBetween(sorted[sorted.length-1], today);
+    if (gap >= 2) {
+      statusEl.textContent = '⚠ DO IT TODAY';
+      statusEl.className = 'streak-status warn';
+    } else {
+      statusEl.textContent = 'KEEP IT ALIVE';
+      statusEl.className = 'streak-status';
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// CHAIN SCREEN
+// ═══════════════════════════════════════════════════════
+function renderChainScreen() {
+  const data = loadData();
+  const { streak, alive, chainStart } = computeStreak(data);
+  const today = todayKey();
+  const sorted = [...data.days].sort();
+
+  document.getElementById('chain-streak-num').textContent = streak;
+
+  const sub = document.getElementById('chain-sub');
+  if (!sorted.length) {
+    sub.textContent = 'COMPLETE A SESSION TO START YOUR CHAIN';
+  } else if (alive) {
+    sub.textContent = 'CHAIN ALIVE · MISS ≤ 2 DAYS TO KEEP IT';
+  } else {
+    sub.textContent = 'CHAIN BROKEN · START A NEW ONE';
+  }
+
+  const grid = document.getElementById('chain-grid');
+  grid.innerHTML = '';
+
+  if (!sorted.length) return;
+
+  // Grid starts at Sunday of the week containing chainStart (or first done day)
+  const displayFrom = alive && chainStart ? chainStart : sorted[sorted.length-1];
+  const gridStart = addDays(displayFrom, -dowOf(displayFrom)); // back to Sunday
+  // Grid ends at Saturday of the week containing today + 1 week lookahead
+  const todaySat = addDays(today, 6 - dowOf(today));
+  const gridEnd = todaySat;
+
+  let cursor = gridStart;
+  let weekNum = 1;
+
+  while (cursor <= gridEnd) {
+    const col = document.createElement('div');
+    col.className = 'chain-week-col';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'chain-week-label';
+    lbl.textContent = `W${weekNum}`;
+    col.appendChild(lbl);
+
+    for (let d = 0; d < 7; d++) {
+      const cell = document.createElement('div');
+      cell.className = 'chain-cell';
+
+      const isFuture = cursor > today;
+      const isDone = data.days.includes(cursor);
+      const isToday = cursor === today;
+
+      if (isFuture) {
+        cell.classList.add('future');
+      } else if (isDone && isToday) {
+        cell.classList.add('done-today');
+        cell.textContent = '✓';
+      } else if (isDone) {
+        cell.classList.add('done');
+        cell.textContent = '✓';
+      } else {
+        cell.classList.add('missed');
+        cell.textContent = '·';
+      }
+
+      col.appendChild(cell);
+      cursor = addDays(cursor, 1);
+    }
+
+    grid.appendChild(col);
+    weekNum++;
+  }
+
+  // Scroll to bottom so latest week is visible
+  setTimeout(() => {
+    const wrap = document.querySelector('.chain-grid-wrap');
+    if (wrap) wrap.scrollTop = wrap.scrollHeight;
+  }, 60);
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════
+function exportChain() {
+  const data = loadData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mobility-chain.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importChain(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const incoming = JSON.parse(e.target.result);
+      if (!Array.isArray(incoming.days)) throw new Error();
+      const existing = loadData();
+      const merged = [...new Set([...existing.days, ...incoming.days])].sort();
+      saveData({ days: merged });
+      renderChainScreen();
+      refreshStreakBar();
+    } catch {
+      alert('Could not import — check the file format.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════
+// SESSION
+// ═══════════════════════════════════════════════════════
+let currentStep = 0;
+let timerInterval = null;
+let timerRemaining = 0;
+let timerTotal = 0;
+let sessionStart = null;
+let elapsedInterval = null;
+
+function startSession() {
+  currentStep = 0;
+  sessionStart = Date.now();
+  showScreen('session-screen');
+  elapsedInterval = setInterval(() => {
+    const sec = Math.floor((Date.now() - sessionStart) / 1000);
+    document.getElementById('elapsed-label').textContent = fmtTime(sec);
+  }, 1000);
+  renderStep();
+}
+
+function renderStep() {
+  clearTimerInterval();
+  const step = STEPS[currentStep];
+  const content = document.getElementById('session-content');
+  content.classList.remove('step-transition');
+  void content.offsetWidth;
+  content.classList.add('step-transition');
+
+  document.getElementById('progress-fill').style.width =
+    ((currentStep / TOTAL_STEPS) * 100) + '%';
+  document.getElementById('step-label').textContent =
+    `STEP ${currentStep + 1} / ${TOTAL_STEPS}`;
+  document.getElementById('move-name').textContent = step.name;
+  document.getElementById('move-cue').textContent = step.cue;
+  document.getElementById('side-badge').textContent =
+    step.side ? `— ${step.side} SIDE —` : '';
+
+  const nextEl = document.getElementById('next-name');
+  if (currentStep + 1 < TOTAL_STEPS) {
+    const nxt = STEPS[currentStep + 1];
+    nextEl.textContent = nxt.name.replace('\n',' ') + (nxt.side ? ` (${nxt.side})` : '');
+  } else {
+    nextEl.textContent = 'FINISH';
+  }
+
+  const timerWrap = document.getElementById('timer-wrap');
+  const repDisplay = document.getElementById('rep-display');
+  const tapBtn = document.getElementById('tap-btn');
+  const ringFill = document.getElementById('ring-fill');
+  const timerDigits = document.getElementById('timer-digits');
+
+  if (step.mode === 'timer') {
+    timerWrap.style.display = 'flex';
+    repDisplay.style.display = 'none';
+    tapBtn.classList.remove('rep-mode');
+    tapBtn.textContent = 'DONE — NEXT →';
+
+    timerTotal = step.dur;
+    timerRemaining = step.dur;
+    timerDigits.textContent = step.dur;
+    ringFill.style.strokeDashoffset = '0';
+    timerWrap.classList.remove('pulse-warn');
+
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      timerDigits.textContent = timerRemaining;
+      ringFill.style.strokeDashoffset = CIRC * (1 - timerRemaining / timerTotal);
+      if (timerRemaining <= 5) timerWrap.classList.add('pulse-warn');
+      if (timerRemaining <= 0) {
+        clearTimerInterval();
+        setTimeout(advanceStep, 400);
+      }
+    }, 1000);
+  } else {
+    timerWrap.style.display = 'none';
+    repDisplay.style.display = 'flex';
+    tapBtn.classList.add('rep-mode');
+    tapBtn.textContent = 'DONE — NEXT →';
+    document.getElementById('rep-count').textContent = step.dur;
+  }
+}
+
+function clearTimerInterval() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function advanceStep() {
+  clearTimerInterval();
+  currentStep++;
+  if (currentStep >= TOTAL_STEPS) endSession();
+  else renderStep();
+}
+
+function endSession() {
+  clearTimerInterval();
+  clearInterval(elapsedInterval);
+
+  let data = loadData();
+  data = markToday(data);
+  saveData(data);
+
+  const { streak } = computeStreak(data);
+  const sec = Math.floor((Date.now() - sessionStart) / 1000);
+
+  document.getElementById('progress-fill').style.width = '100%';
+  document.getElementById('done-streak-num').textContent = streak;
+  document.getElementById('session-time').textContent = fmtTime(sec);
+  document.getElementById('done-quip').textContent =
+    QUIPS[Math.floor(Math.random() * QUIPS.length)];
+
+  refreshStreakBar();
+  showScreen('done-screen');
+}
+
+// ═══════════════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════════════
+document.getElementById('btn-start').addEventListener('click', startSession);
+document.getElementById('tap-btn').addEventListener('click', advanceStep);
+
+document.getElementById('streak-bar').addEventListener('click', () => {
+  renderChainScreen();
+  showScreen('chain-screen');
+});
+
+document.getElementById('chain-back').addEventListener('click', () => showScreen('start-screen'));
+
+document.getElementById('btn-export').addEventListener('click', exportChain);
+document.getElementById('btn-import').addEventListener('click', () =>
+  document.getElementById('import-input').click()
+);
+document.getElementById('import-input').addEventListener('change', e => {
+  if (e.target.files[0]) importChain(e.target.files[0]);
+  e.target.value = '';
+});
+
+document.getElementById('btn-see-chain').addEventListener('click', () => {
+  renderChainScreen();
+  showScreen('chain-screen');
+});
+document.getElementById('btn-back-home').addEventListener('click', () => {
+  refreshStreakBar();
+  showScreen('start-screen');
+});
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+buildStartScreen();
+</script>
+</body>
+</html>
