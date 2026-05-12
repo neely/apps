@@ -799,6 +799,31 @@ function importChain(file) {
 }
 
 // ═══════════════════════════════════════════════════════
+// WAKE LOCK
+// ═══════════════════════════════════════════════════════
+let wakeLock = null;
+
+async function acquireWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch (e) { /* silently ignore — not critical */ }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+}
+
+// Re-acquire if page becomes visible again (iOS releases it on bg)
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && wakeLock === null) {
+    const onSession = !document.getElementById('session-screen').classList.contains('hidden');
+    if (onSession) await acquireWakeLock();
+  }
+});
+
+// ═══════════════════════════════════════════════════════
 // SESSION
 // ═══════════════════════════════════════════════════════
 let currentStep = 0;
@@ -811,6 +836,7 @@ let elapsedInterval = null;
 function startSession() {
   currentStep = 0;
   sessionStart = Date.now();
+  acquireWakeLock();
   showScreen('session-screen');
   elapsedInterval = setInterval(() => {
     const sec = Math.floor((Date.now() - sessionStart) / 1000);
@@ -895,6 +921,7 @@ function advanceStep() {
 function endSession() {
   clearTimerInterval();
   clearInterval(elapsedInterval);
+  releaseWakeLock();
 
   let data = loadData();
   data = markToday(data);
