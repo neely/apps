@@ -80,6 +80,14 @@
       border-bottom: none;
     }
 
+    .app-badges {
+      display: flex;
+      gap: 0.4rem;
+      padding: 0 0 0.85rem calc(58px + 1rem);
+      margin-top: -0.5rem;
+      flex-wrap: wrap;
+    }
+
     .app-link {
       display: flex;
       align-items: center;
@@ -138,6 +146,43 @@
       flex-shrink: 0;
     }
 
+    .badge {
+      font-size: 0.6rem;
+      letter-spacing: 0.03em;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .badge-gated {
+      background: #EDE0C8;
+      color: #8A6A3A;
+      border: 1px solid #D4C0A8;
+    }
+
+    .badge-template {
+      background: #2A1A0E;
+      color: #EDE8DC;
+    }
+
+    .badge-template:active {
+      opacity: 0.7;
+    }
+
+    /* ── Section dividers ── */
+    .section-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: #9A7A5A;
+      text-transform: uppercase;
+      margin: 1.5rem 0 0.5rem;
+    }
+
+    .section-label:first-child {
+      margin-top: 0;
+    }
+
     /* ── Footer ── */
     .footer {
       margin-top: 2rem;
@@ -157,6 +202,8 @@
     </header>
 
     <ul class="app-list">
+
+      <li class="section-label">// browser-only tools</li>
 
       <li class="app-item">
         <a class="app-link" href="135-todo.html">
@@ -235,10 +282,103 @@
           <span class="app-chevron">›</span>
         </a>
       </li>	
-	  
+
+      <li class="section-label">// live sites (github + cloudflare)</li>
+
+      <li class="app-item">
+        <a class="app-link" href="https://radio.benneely.com">
+          <div class="app-logo-wrap">
+            <img src="icons/radio-icon.png" alt="The Dial icon" />
+          </div>
+          <div class="app-info">
+            <div class="app-name">The Dial</div>
+            <div class="app-desc">web radio tuner — 15 community &amp; public stations</div>
+          </div>
+          <span class="app-chevron">›</span>
+        </a>
+      </li>
+
+      <li class="app-item">
+        <a class="app-link" href="https://recipes.benneely.com">
+          <div class="app-logo-wrap">
+            <img src="icons/recipes-icon.png" alt="Recipes icon" />
+          </div>
+          <div class="app-info">
+            <div class="app-name">Recipes</div>
+            <div class="app-desc">family recipe collection, three-tab layout</div>
+          </div>
+          <span class="app-chevron">›</span>
+        </a>
+      </li>
+
+      <li class="app-item">
+        <a class="app-link" href="https://hiking.benneely.com">
+          <div class="app-logo-wrap">
+            <img src="icons/hiking-journal-icon.png" alt="Hiking Journal icon" />
+          </div>
+          <div class="app-info">
+            <div class="app-name">Hiking Journal</div>
+            <div class="app-desc">family hiking log — photos, stats, trail maps</div>
+          </div>
+          <span class="app-chevron">›</span>
+        </a>
+        <div class="app-badges">
+          <span class="badge badge-gated">🔒 gated</span>
+          <a class="badge badge-template" href="https://github.com/neely/hiking-journal-template">public template →</a>
+        </div>
+      </li>
+
+      <li class="app-item">
+        <a class="app-link" href="https://kidbank.benneely.com">
+          <div class="app-logo-wrap">
+            <img src="icons/kid-bank-icon.png" alt="Kid Bank icon" />
+          </div>
+          <div class="app-info">
+            <div class="app-name">Kid Bank</div>
+            <div class="app-desc">allowance &amp; investment ledger for the kids</div>
+          </div>
+          <span class="app-chevron">›</span>
+        </a>
+        <div class="app-badges">
+          <span class="badge badge-gated">🔒 gated</span>
+        </div>
+      </li>
+
+      <li class="app-item">
+        <a class="app-link" href="https://kb-apps.benneely.com">
+          <div class="app-logo-wrap">
+            <img src="icons/kb-apps-icon.svg" alt="kb-apps icon" />
+          </div>
+          <div class="app-info">
+            <div class="app-name">kb-apps</div>
+            <div class="app-desc">kettlebell &amp; workout program hub</div>
+          </div>
+          <span class="app-chevron">›</span>
+        </a>
+        <div class="app-badges">
+          <span class="badge badge-gated">🔒 gated</span>
+        </div>
+      </li>
+
+      <li class="app-item">
+        <a class="app-link" href="https://deckhand.benneely.com">
+          <div class="app-logo-wrap">
+            <img src="icons/deckhand-icon.svg" alt="Deckhand icon" />
+          </div>
+          <div class="app-info">
+            <div class="app-name">Deckhand</div>
+            <div class="app-desc">Steam library/wishlist/bundle tracker</div>
+          </div>
+          <span class="app-chevron">›</span>
+        </a>
+        <div class="app-badges">
+          <span class="badge badge-gated">🔒 gated</span>
+        </div>
+      </li>
+
     </ul>
 
-    <div class="footer">// 6 apps loaded</div>
+    <div class="footer">// 12 apps loaded</div>
 
   </div>
 </body>
